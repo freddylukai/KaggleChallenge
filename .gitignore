@@ -1,0 +1,16 @@
+.ipynb_checkpoints
+**/__pycache__
+**/.vscode
+*.dcm
+*.zip
+
+# Some binaries created by tf, for now we don't want to commit them.
+**/inference
+**/checkpoint
+**/graph.pbtxt
+**/*.pb
+**/*.ckpt*
+**/*.tfevents*
+
+# .record is the tfrecord extension
+**/*.record

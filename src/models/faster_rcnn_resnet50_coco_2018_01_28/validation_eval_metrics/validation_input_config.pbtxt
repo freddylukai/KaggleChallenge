@@ -1,0 +1,4 @@
+
+label_map_path: 'models/faster_rcnn_resnet50_coco_2018_01_28/validation_eval_metrics/oid_bbox_trainable_label_map.pbtxt'
+tf_record_input_reader: { input_path: 'C:/Users/bones/kaggle/rsna/src/models/faster_rcnn_resnet50_coco_2018_01_28/inference' }
+
