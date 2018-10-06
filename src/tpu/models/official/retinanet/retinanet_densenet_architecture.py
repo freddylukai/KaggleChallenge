@@ -188,6 +188,13 @@ def resize_bilinear(images, size, output_type):
   images = tf.image.resize_bilinear(images, size, align_corners=True)
   return tf.cast(images, output_type)
 
+def create_block(input, n, depth, is_training_bn=False):
+    k = 32
+    with tf.variable_scope("denseblock-%d-%d" %(n, depth)):
+        output = dense_block(input, k, is_training_bn)
+        input = tf.concat([input, output], axis=3)
+    return input
+
 
 def densenet(densenet_depth):
     depths = [6, 12, 24, 16]
@@ -209,18 +216,26 @@ def densenet(densenet_depth):
         v = tf.nn.relu(v)
         v = tf.layers.max_pooling2d(v, pool_size=3, strides=2, padding="same")
 
-        for i, depth in enumerate(depths):
-            with tf.variable_scope("block-%d" % i):
-                for j in range(depth):
-                    with tf.variable_scope("denseblock-%d-%d" % (i, j)):
-                        output = dense_block(v, k, is_training_bn)
-                        v = tf.concat([v, output], axis=3)
-                        num_channels += k
-                if i != len(depths) - 1:
-                    num_channels /= 2
-                    v = transition_layer(v, num_channels, is_training_bn)
-        return v
+        c2 = create_block(v, 0, 6, is_training_bn)
+        num_channels += k
+        num_channels /= 2
+        c2 = transition_layer(c2, num_channels, is_training_bn)
+
+        c3 = create_block(c2, 1, 12, is_training_bn)
+        num_channels += k
+        num_channels /= 2
+        c3 = transition_layer(c3, num_channels, is_training_bn)
+
+        c4 = create_block(c3, 2, 24, is_training_bn)
+        num_channels += k
+        num_channels /= 2
+        c4 = transition_layer(c3, num_channels, is_training_bn)
+
+        c5 = create_block(c4, 3, 16, is_training_bn)
+
+        return c2, c3, c4, c5
     return model
+
 
 
 ## RetinaNet specific layers
@@ -291,85 +306,65 @@ def densenet_fpn(features,
                  use_nearest_upsampling=True):
     with tf.variable_scope('densenet121'):
         densenet_fn = densenet()
+        u2, u3, u4, u5 = densenet_fn(features, is_training_bn)
 
+    feats_bottom_up = {
+        2: u2,
+        3: u3,
+        4: u4,
+        5: u5,
+    }
 
-def resnet_fpn(features,
-               min_level=3,
-               max_level=7,
-               resnet_depth=50,
-               is_training_bn=False,
-               use_nearest_upsampling=True):
-  """ResNet feature pyramid networks."""
-  # upward layers
-  with tf.variable_scope('resnet%s' % resnet_depth):
-    resnet_fn = resnet_v1(resnet_depth)
-    u2, u3, u4, u5 = resnet_fn(features, is_training_bn)
+    with tf.variable_scope("densenet_fpn"):
+        feats_lateral = {}
+        for level in range(min_level, _RESNET_MAX_LEVEL + 1):
+            feats_lateral[level] = tf.layers.conv2d(
+                feats_bottom_up[level],
+                filters = 256,
+                kernel_size=(1, 1),
+                padding='same',
+                name='1%d' % level)
+        feats = {_RESNET_MAX_LEVEL: feats_lateral[_RESNET_MAX_LEVEL]}
+        for level in range(_RESNET_MAX_LEVEL - 1, min_level -1, -1):
+            if use_nearest_upsampling:
+                feats[level] = nearest_upsampling(feats[level +1], 2) + feats_lateral[level]
+            else:
+                feats[level] = resize_bilinear(
+                    feats[level + 1], tf.shape(feats_lateral[level])[1:3],
+                    feats[level + 1].dtype) + feats_lateral[level]
 
-  feats_bottom_up = {
-      2: u2,
-      3: u3,
-      4: u4,
-      5: u5,
-  }
+        for level in range(min_level, _RESNET_MAX_LEVEL + 1):
+            feats[level] = tf.layers.conv2d(
+                feats[level],
+                filters=256,
+                strides=(1, 1),
+                kernel_size=(3, 3),
+                padding='same',
+                name='post_hoc_d%d' % level)
 
-  with tf.variable_scope('resnet_fpn'):
-    # lateral connections
-    feats_lateral = {}
-    for level in range(min_level, _RESNET_MAX_LEVEL + 1):
-      feats_lateral[level] = tf.layers.conv2d(
-          feats_bottom_up[level],
-          filters=256,
-          kernel_size=(1, 1),
-          padding='same',
-          name='l%d' % level)
-
-    # add top-down path
-    feats = {_RESNET_MAX_LEVEL: feats_lateral[_RESNET_MAX_LEVEL]}
-    for level in range(_RESNET_MAX_LEVEL - 1, min_level - 1, -1):
-      if use_nearest_upsampling:
-        feats[level] = nearest_upsampling(feats[level + 1],
-                                          2) + feats_lateral[level]
-      else:
-        feats[level] = resize_bilinear(
-            feats[level + 1], tf.shape(feats_lateral[level])[1:3],
-            feats[level + 1].dtype) + feats_lateral[level]
-
-    # add post-hoc 3x3 convolution kernel
-    for level in range(min_level, _RESNET_MAX_LEVEL + 1):
-      feats[level] = tf.layers.conv2d(
-          feats[level],
-          filters=256,
-          strides=(1, 1),
-          kernel_size=(3, 3),
-          padding='same',
-          name='post_hoc_d%d' % level)
-
-    # coarser FPN levels introduced for RetinaNet
-    for level in range(_RESNET_MAX_LEVEL + 1, max_level + 1):
-      feats_in = feats[level - 1]
-      if level > _RESNET_MAX_LEVEL + 1:
-        feats_in = tf.nn.relu(feats_in)
-      feats[level] = tf.layers.conv2d(
-          feats_in,
-          filters=256,
-          strides=(2, 2),
-          kernel_size=(3, 3),
-          padding='same',
-          name='p%d' % level)
-    # add batchnorm
-    for level in range(min_level, max_level + 1):
-      feats[level] = tf.layers.batch_normalization(
-          inputs=feats[level],
-          momentum=_BATCH_NORM_DECAY,
-          epsilon=_BATCH_NORM_EPSILON,
-          center=True,
-          scale=True,
-          training=is_training_bn,
-          fused=True,
-          name='p%d-bn' % level)
-
-  return feats
-
+        for level in range(_RESNET_MAX_LEVEL + 1, max_level + 1):
+            feats_in = feats[level - 1]
+            if level > _RESNET_MAX_LEVEL + 1:
+                feats_in = tf.nn.relu(feats_in)
+            feats[level] = tf.layers.conv2d(
+                feats_in,
+                filters=256,
+                strides=(2, 2),
+                kernel_size=(3, 3),
+                padding='same',
+                name='p%d' % level)
+            # add batchnorm
+        for level in range(min_level, max_level + 1):
+            feats[level] = tf.layers.batch_normalization(
+                inputs=feats[level],
+                momentum=_BATCH_NORM_DECAY,
+                epsilon=_BATCH_NORM_EPSILON,
+                center=True,
+                scale=True,
+                training=is_training_bn,
+                fused=True,
+                name='p%d-bn' % level)
+    return feats
 
 def retinanet(features,
               min_level=3,
@@ -381,7 +376,7 @@ def retinanet(features,
               is_training_bn=False):
   """RetinaNet classification and regression model."""
   # create feature pyramid networks
-  feats = resnet_fpn(features, min_level, max_level, resnet_depth,
+  feats = densenet_fpn(features, min_level, max_level, resnet_depth,
                      is_training_bn, use_nearest_upsampling)
   # add class net and box net in RetinaNet. The class net and the box net are
   # shared among all the levels.
@@ -398,16 +393,6 @@ def retinanet(features,
                                      num_anchors, is_training_bn)
 
   return class_outputs, box_outputs
-
-def retinanet_densenet(features,
-                       min_level=3,
-                       max_level=7,
-                       num_classes=1,
-                       num_anchors=6,
-                       densenet_depth=50,
-                       use_nearest_upsampling=True,
-                       is_training_bn=False):
-    pass
 
 def remove_variables(variables, resnet_depth=50):
   """Removes low-level variables from the input.
@@ -495,7 +480,7 @@ def retinanet_segmentation(features,
     A tensor of size [batch, height_l, width_l, num_classes]
       representing pixel-wise predictions before Softmax function.
   """
-  feats = resnet_fpn(features, min_level, max_level, resnet_depth,
+  feats = densenet_fpn(features, min_level, max_level, resnet_depth,
                      is_training_bn, use_nearest_upsampling)
 
   with tf.variable_scope('class_net', reuse=tf.AUTO_REUSE):

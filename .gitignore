@@ -3,6 +3,7 @@
 **/.vscode
 *.dcm
 *.zip
+.idea/
 
 # Some binaries created by tf, for now we don't want to commit them.
 **/inference
