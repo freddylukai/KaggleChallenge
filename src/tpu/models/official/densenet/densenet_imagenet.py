@@ -17,7 +17,6 @@
 Original paper: (https://arxiv.org/abs/1608.06993)
 """
 
-
 import os
 from absl import flags
 import absl.logging as _logging  # pylint: disable=unused-import
@@ -33,15 +32,15 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string(
     'tpu', default=None,
     help='The Cloud TPU to use for training. This should be either the name '
-    'used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 url.')
+         'used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 url.')
 flags.DEFINE_string(
     "gcp_project", default=None,
     help="Project name for the Cloud TPU-enabled project. If not specified, we "
-    "will attempt to automatically detect the GCE project from metadata.")
+         "will attempt to automatically detect the GCE project from metadata.")
 flags.DEFINE_string(
     "tpu_zone", default=None,
     help="GCE zone where the Cloud TPU is located in. If not specified, we "
-    "will attempt to automatically detect the GCE project from metadata.")
+         "will attempt to automatically detect the GCE project from metadata.")
 
 # Model specific paramenters
 flags.DEFINE_string(
@@ -139,273 +138,272 @@ _LR_SCHEDULE = [  # (LR multiplier, epoch to start)
 
 
 def learning_rate_schedule(current_epoch):
-  """Handles linear scaling rule, gradual warmup, and LR decay."""
-  scaled_lr = _BASE_LR * (FLAGS.train_batch_size / 256.0)
+    """Handles linear scaling rule, gradual warmup, and LR decay."""
+    scaled_lr = _BASE_LR * (FLAGS.train_batch_size / 256.0)
 
-  decay_rate = scaled_lr
-  for mult, start_epoch in _LR_SCHEDULE:
-    decay_rate = tf.where(current_epoch < start_epoch, decay_rate,
-                          scaled_lr * mult)
+    decay_rate = scaled_lr
+    for mult, start_epoch in _LR_SCHEDULE:
+        decay_rate = tf.where(current_epoch < start_epoch, decay_rate,
+                              scaled_lr * mult)
 
-  return decay_rate
+    return decay_rate
 
 
 class ImageNetInput(object):
-  """Wrapper class that acts as the input_fn to TPUEstimator."""
+    """Wrapper class that acts as the input_fn to TPUEstimator."""
 
-  def __init__(self, is_training, data_dir=None):
-    self.is_training = is_training
-    if data_dir:
-      self.data_dir = data_dir
-    elif FLAGS.data_dir:
-      self.data_dir = FLAGS.data_dir
-    else:
-      self.data_dir = None
+    def __init__(self, is_training, data_dir=None):
+        self.is_training = is_training
+        if data_dir:
+            self.data_dir = data_dir
+        elif FLAGS.data_dir:
+            self.data_dir = FLAGS.data_dir
+        else:
+            self.data_dir = None
 
-  def dataset_parser(self, value):
-    """Parse an Imagenet record from value."""
-    keys_to_features = {
-        "image/encoded": tf.FixedLenFeature((), tf.string, ""),
-        "image/format": tf.FixedLenFeature((), tf.string, "jpeg"),
-        "image/class/label": tf.FixedLenFeature([], tf.int64, -1),
-        "image/class/text": tf.FixedLenFeature([], tf.string, ""),
-        "image/object/bbox/xmin": tf.VarLenFeature(dtype=tf.float32),
-        "image/object/bbox/ymin": tf.VarLenFeature(dtype=tf.float32),
-        "image/object/bbox/xmax": tf.VarLenFeature(dtype=tf.float32),
-        "image/object/bbox/ymax": tf.VarLenFeature(dtype=tf.float32),
-        "image/object/class/label": tf.VarLenFeature(dtype=tf.int64),
-    }
+    def dataset_parser(self, value):
+        """Parse an Imagenet record from value."""
+        keys_to_features = {
+            "image/encoded": tf.FixedLenFeature((), tf.string, ""),
+            "image/format": tf.FixedLenFeature((), tf.string, "jpeg"),
+            "image/class/label": tf.FixedLenFeature([], tf.int64, -1),
+            "image/class/text": tf.FixedLenFeature([], tf.string, ""),
+            "image/object/bbox/xmin": tf.VarLenFeature(dtype=tf.float32),
+            "image/object/bbox/ymin": tf.VarLenFeature(dtype=tf.float32),
+            "image/object/bbox/xmax": tf.VarLenFeature(dtype=tf.float32),
+            "image/object/bbox/ymax": tf.VarLenFeature(dtype=tf.float32),
+            "image/object/class/label": tf.VarLenFeature(dtype=tf.int64),
+        }
 
-    parsed = tf.parse_single_example(value, keys_to_features)
+        parsed = tf.parse_single_example(value, keys_to_features)
 
-    image = tf.image.decode_image(
-        tf.reshape(parsed["image/encoded"], shape=[]), _NUM_CHANNELS)
-    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+        image = tf.image.decode_image(
+            tf.reshape(parsed["image/encoded"], shape=[]), _NUM_CHANNELS)
+        image = tf.image.convert_image_dtype(image, dtype=tf.float32)
 
-    # TODO(shivaniagrawal): height and width of image from model
-    image = vgg_preprocessing.preprocess_image(
-        image=image,
-        output_height=224,
-        output_width=224,
-        is_training=self.is_training)
+        # TODO(shivaniagrawal): height and width of image from model
+        image = vgg_preprocessing.preprocess_image(
+            image=image,
+            output_height=224,
+            output_width=224,
+            is_training=self.is_training)
 
-    label = tf.cast(
-        tf.reshape(parsed["image/class/label"], shape=[]), dtype=tf.int32)
+        label = tf.cast(
+            tf.reshape(parsed["image/class/label"], shape=[]), dtype=tf.int32)
 
-    return image, tf.one_hot(label, _LABEL_CLASSES)
+        return image, tf.one_hot(label, _LABEL_CLASSES)
 
-  def __call__(self, params):
-    """Input function which provides a single batch for train or eval."""
-    if self.data_dir is None:
-      tf.logging.info('Using fake input.')
-      return self._input_fn_null(params)
+    def __call__(self, params):
+        """Input function which provides a single batch for train or eval."""
+        if self.data_dir is None:
+            tf.logging.info('Using fake input.')
+            return self._input_fn_null(params)
 
-    # Retrieves the batch size for the current shard. The # of shards is
-    # computed according to the input pipeline deployment. See
-    # `tf.contrib.tpu.RunConfig` for details.
-    batch_size = params["batch_size"]
+        # Retrieves the batch size for the current shard. The # of shards is
+        # computed according to the input pipeline deployment. See
+        # `tf.contrib.tpu.RunConfig` for details.
+        batch_size = params["batch_size"]
 
-    # Shuffle the filenames to ensure better randomization
-    file_pattern = os.path.join(self.data_dir, "train-*"
-                                if self.is_training else "validation-*")
-    dataset = tf.data.Dataset.list_files(file_pattern, shuffle=False)
-    if self.is_training:
-      dataset = dataset.shuffle(buffer_size=1024)  # 1024 files in dataset
+        # Shuffle the filenames to ensure better randomization
+        file_pattern = os.path.join(self.data_dir, "train-*"
+        if self.is_training else "validation-*")
+        dataset = tf.data.Dataset.list_files(file_pattern, shuffle=False)
+        if self.is_training:
+            dataset = dataset.shuffle(buffer_size=1024)  # 1024 files in dataset
 
-    if self.is_training:
-      dataset = dataset.repeat()
+        if self.is_training:
+            dataset = dataset.repeat()
 
-    def prefetch_dataset(filename):
-      buffer_size = FLAGS.prefetch_dataset_buffer_size
-      dataset = tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
-      return dataset
+        def prefetch_dataset(filename):
+            buffer_size = FLAGS.prefetch_dataset_buffer_size
+            dataset = tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
+            return dataset
 
-    dataset = dataset.apply(
-        tf.contrib.data.parallel_interleave(
-            prefetch_dataset, cycle_length=FLAGS.num_files_infeed, sloppy=True))
-    dataset = dataset.shuffle(FLAGS.shuffle_buffer_size)
+        dataset = dataset.apply(
+            tf.contrib.data.parallel_interleave(
+                prefetch_dataset, cycle_length=FLAGS.num_files_infeed, sloppy=True))
+        dataset = dataset.shuffle(FLAGS.shuffle_buffer_size)
 
-    dataset = dataset.map(self.dataset_parser, num_parallel_calls=128)
-    dataset = dataset.prefetch(batch_size)
-    dataset = dataset.apply(
-        tf.contrib.data.batch_and_drop_remainder(batch_size))
-    dataset = dataset.prefetch(2)  # Prefetch overlaps in-feed with training
-    return dataset
+        dataset = dataset.map(self.dataset_parser, num_parallel_calls=128)
+        dataset = dataset.prefetch(batch_size)
+        dataset = dataset.apply(
+            tf.contrib.data.batch_and_drop_remainder(batch_size))
+        dataset = dataset.prefetch(2)  # Prefetch overlaps in-feed with training
+        return dataset
 
-  def _input_fn_null(self, params):
-    """Input function which provides null (black) images."""
-    batch_size = params["batch_size"]
-    null_image = tf.zeros([224, 224, 3], tf.float32)
-    null_label = tf.one_hot(tf.constant(0, tf.int32), _LABEL_CLASSES)
-    dataset = tf.data.Dataset.from_tensors((null_image, null_label))
-    dataset = dataset.repeat(batch_size).batch(batch_size, drop_remainder=True)
-    dataset = dataset.take(1).cache().repeat()
-    tf.logging.info("Input dataset: %s", str(dataset))
-    return dataset
+    def _input_fn_null(self, params):
+        """Input function which provides null (black) images."""
+        batch_size = params["batch_size"]
+        null_image = tf.zeros([224, 224, 3], tf.float32)
+        null_label = tf.one_hot(tf.constant(0, tf.int32), _LABEL_CLASSES)
+        dataset = tf.data.Dataset.from_tensors((null_image, null_label))
+        dataset = dataset.repeat(batch_size).batch(batch_size, drop_remainder=True)
+        dataset = dataset.take(1).cache().repeat()
+        tf.logging.info("Input dataset: %s", str(dataset))
+        return dataset
 
 
 def model_fn(features, labels, mode, params):
-  """Our model_fn for Densenet to be used with our Estimator."""
-  tf.logging.info("model_fn")
+    """Our model_fn for Densenet to be used with our Estimator."""
+    tf.logging.info("model_fn")
 
-  if FLAGS.network_depth == 169:
-    logits = densenet_model.densenet_imagenet_169(
-        features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
-  elif FLAGS.network_depth == 201:
-    logits = densenet_model.densenet_imagenet_201(
-        features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
-  elif FLAGS.network_depth == 121:
-    logits = densenet_model.densenet_imagenet_121(
-        features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
-  else:
-    tf.logging.info("Number of layers not supported, revert to 121")
-    logits = densenet_model.densenet_imagenet_121(
-        features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+    if FLAGS.network_depth == 169:
+        logits = densenet_model.densenet_imagenet_169(
+            features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+    elif FLAGS.network_depth == 201:
+        logits = densenet_model.densenet_imagenet_201(
+            features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+    elif FLAGS.network_depth == 121:
+        logits = densenet_model.densenet_imagenet_121(
+            features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+    else:
+        tf.logging.info("Number of layers not supported, revert to 121")
+        logits = densenet_model.densenet_imagenet_121(
+            features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
 
-  # Calculate loss, which includes softmax cross entropy and L2 regularization.
-  cross_entropy = tf.losses.softmax_cross_entropy(
-      logits=logits, onehot_labels=labels)
+    # Calculate loss, which includes softmax cross entropy and L2 regularization.
+    cross_entropy = tf.losses.softmax_cross_entropy(
+        logits=logits, onehot_labels=labels)
 
-  # Add weight decay to the loss. We exclude weight decay on the batch
-  # normalization variables because it slightly improves accuracy.
-  loss = cross_entropy + _WEIGHT_DECAY * tf.add_n([
-      tf.nn.l2_loss(v)
-      for v in tf.trainable_variables()
-      if "batch_normalization" not in v.name
-  ])
+    # Add weight decay to the loss. We exclude weight decay on the batch
+    # normalization variables because it slightly improves accuracy.
+    loss = cross_entropy + _WEIGHT_DECAY * tf.add_n([
+        tf.nn.l2_loss(v)
+        for v in tf.trainable_variables()
+        if "batch_normalization" not in v.name
+    ])
 
-  global_step = tf.train.get_global_step()
-  current_epoch = (
-      tf.cast(global_step, tf.float32) / params["batches_per_epoch"])
-  learning_rate = learning_rate_schedule(current_epoch)
+    global_step = tf.train.get_global_step()
+    current_epoch = (
+            tf.cast(global_step, tf.float32) / params["batches_per_epoch"])
+    learning_rate = learning_rate_schedule(current_epoch)
 
-  # TODO(chrisying): this is a hack to get the LR and epoch for Tensorboard.
-  # Reimplement this when TPU training summaries are supported.
-  lr_repeat = tf.reshape(
-      tf.tile(tf.expand_dims(learning_rate, 0), [
-          params["batch_size"],
-      ]), [params["batch_size"], 1])
-  ce_repeat = tf.reshape(
-      tf.tile(tf.expand_dims(current_epoch, 0), [
-          params["batch_size"],
-      ]), [params["batch_size"], 1])
+    # TODO(chrisying): this is a hack to get the LR and epoch for Tensorboard.
+    # Reimplement this when TPU training summaries are supported.
+    lr_repeat = tf.reshape(
+        tf.tile(tf.expand_dims(learning_rate, 0), [
+            params["batch_size"],
+        ]), [params["batch_size"], 1])
+    ce_repeat = tf.reshape(
+        tf.tile(tf.expand_dims(current_epoch, 0), [
+            params["batch_size"],
+        ]), [params["batch_size"], 1])
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
-    optimizer = tf.train.MomentumOptimizer(
-        learning_rate=learning_rate, momentum=_MOMENTUM)
-    optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        optimizer = tf.train.MomentumOptimizer(
+            learning_rate=learning_rate, momentum=_MOMENTUM)
+        optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
 
-    # Batch norm requires update_ops to be added as a train_op dependency.
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    with tf.control_dependencies(update_ops):
-      train_op = optimizer.minimize(loss, global_step)
-  else:
-    train_op = None
+        # Batch norm requires update_ops to be added as a train_op dependency.
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            train_op = optimizer.minimize(loss, global_step)
+    else:
+        train_op = None
 
-  eval_metrics = None
-  if mode == tf.estimator.ModeKeys.EVAL:
+    eval_metrics = None
+    if mode == tf.estimator.ModeKeys.EVAL:
+        def metric_fn(labels, logits, lr_repeat, ce_repeat):
+            """Evaluation metric fn. Performed on CPU, do not reference TPU ops."""
+            predictions = tf.argmax(logits, axis=1)
+            accuracy = tf.metrics.accuracy(tf.argmax(labels, axis=1), predictions)
+            lr = tf.metrics.mean(lr_repeat)
+            ce = tf.metrics.mean(ce_repeat)
+            return {"accuracy": accuracy, "learning_rate": lr, "current_epoch": ce}
 
-    def metric_fn(labels, logits, lr_repeat, ce_repeat):
-      """Evaluation metric fn. Performed on CPU, do not reference TPU ops."""
-      predictions = tf.argmax(logits, axis=1)
-      accuracy = tf.metrics.accuracy(tf.argmax(labels, axis=1), predictions)
-      lr = tf.metrics.mean(lr_repeat)
-      ce = tf.metrics.mean(ce_repeat)
-      return {"accuracy": accuracy, "learning_rate": lr, "current_epoch": ce}
+        eval_metrics = (metric_fn, [labels, logits, lr_repeat, ce_repeat])
 
-    eval_metrics = (metric_fn, [labels, logits, lr_repeat, ce_repeat])
-
-  return tf.contrib.tpu.TPUEstimatorSpec(
-      mode=mode, loss=loss, train_op=train_op, eval_metrics=eval_metrics)
+    return tf.contrib.tpu.TPUEstimatorSpec(
+        mode=mode, loss=loss, train_op=train_op, eval_metrics=eval_metrics)
 
 
 def main(unused_argv):
-  tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
-      FLAGS.tpu,
-      zone=FLAGS.tpu_zone,
-      project=FLAGS.gcp_project)
+    tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
+        FLAGS.tpu,
+        zone=FLAGS.tpu_zone,
+        project=FLAGS.gcp_project)
 
-  batches_per_epoch = _NUM_TRAIN_IMAGES / FLAGS.train_batch_size
-  steps_per_checkpoint = FLAGS.steps_per_checkpoint
-  iterations_per_loop = FLAGS.iterations_per_loop
-  eval_steps = _NUM_EVAL_IMAGES // FLAGS.eval_batch_size
-  if iterations_per_loop is None or steps_per_checkpoint < iterations_per_loop:
-    iterations_per_loop = steps_per_checkpoint
-  if FLAGS.mode == "eval":
-    iterations_per_loop = eval_steps
-  params = {
-      "batches_per_epoch": batches_per_epoch,
-  }
+    batches_per_epoch = _NUM_TRAIN_IMAGES / FLAGS.train_batch_size
+    steps_per_checkpoint = FLAGS.steps_per_checkpoint
+    iterations_per_loop = FLAGS.iterations_per_loop
+    eval_steps = _NUM_EVAL_IMAGES // FLAGS.eval_batch_size
+    if iterations_per_loop is None or steps_per_checkpoint < iterations_per_loop:
+        iterations_per_loop = steps_per_checkpoint
+    if FLAGS.mode == "eval":
+        iterations_per_loop = eval_steps
+    params = {
+        "batches_per_epoch": batches_per_epoch,
+    }
 
-  config = tf.contrib.tpu.RunConfig(
-      cluster=tpu_cluster_resolver,
-      model_dir=FLAGS.model_dir,
-      save_checkpoints_steps=steps_per_checkpoint,
-      log_step_count_steps=iterations_per_loop,
-      tpu_config=tf.contrib.tpu.TPUConfig(
-          iterations_per_loop=iterations_per_loop, num_shards=FLAGS.num_shards))
+    config = tf.contrib.tpu.RunConfig(
+        cluster=tpu_cluster_resolver,
+        model_dir=FLAGS.model_dir,
+        save_checkpoints_steps=steps_per_checkpoint,
+        log_step_count_steps=iterations_per_loop,
+        tpu_config=tf.contrib.tpu.TPUConfig(
+            iterations_per_loop=iterations_per_loop, num_shards=FLAGS.num_shards))
 
-  densenet_estimator = tf.contrib.tpu.TPUEstimator(
-      model_fn=model_fn,
-      config=config,
-      train_batch_size=FLAGS.train_batch_size,
-      eval_batch_size=FLAGS.eval_batch_size,
-      params=params)
+    densenet_estimator = tf.contrib.tpu.TPUEstimator(
+        model_fn=model_fn,
+        config=config,
+        train_batch_size=FLAGS.train_batch_size,
+        eval_batch_size=FLAGS.eval_batch_size,
+        params=params)
 
-  if FLAGS.mode == "train":
-    tf.logging.info("Training for %d steps (%.2f epochs in total)." %
-                    (FLAGS.train_steps, FLAGS.train_steps / batches_per_epoch))
-    densenet_estimator.train(
-        input_fn=ImageNetInput(True), max_steps=FLAGS.train_steps)
+    if FLAGS.mode == "train":
+        tf.logging.info("Training for %d steps (%.2f epochs in total)." %
+                        (FLAGS.train_steps, FLAGS.train_steps / batches_per_epoch))
+        densenet_estimator.train(
+            input_fn=ImageNetInput(True), max_steps=FLAGS.train_steps)
 
-  elif FLAGS.mode == "train_and_eval":
-    current_step = 0
-    tf.logging.info("Training for %d steps (%.2f epochs in total). Current "
-                    "step %d" %
-                    (FLAGS.train_steps, FLAGS.train_steps / batches_per_epoch,
-                     current_step))
-    while current_step < FLAGS.train_steps:
-      next_checkpoint = min(current_step + steps_per_checkpoint,
-                            FLAGS.train_steps)
-      num_steps = next_checkpoint - current_step
-      current_step = next_checkpoint
-      densenet_estimator.train(input_fn=ImageNetInput(True), steps=num_steps)
+    elif FLAGS.mode == "train_and_eval":
+        current_step = 0
+        tf.logging.info("Training for %d steps (%.2f epochs in total). Current "
+                        "step %d" %
+                        (FLAGS.train_steps, FLAGS.train_steps / batches_per_epoch,
+                         current_step))
+        while current_step < FLAGS.train_steps:
+            next_checkpoint = min(current_step + steps_per_checkpoint,
+                                  FLAGS.train_steps)
+            num_steps = next_checkpoint - current_step
+            current_step = next_checkpoint
+            densenet_estimator.train(input_fn=ImageNetInput(True), steps=num_steps)
 
-      tf.logging.info("Starting to evaluate.")
-      eval_results = densenet_estimator.evaluate(
-          input_fn=ImageNetInput(False),
-          steps=_NUM_EVAL_IMAGES // FLAGS.eval_batch_size)
-      tf.logging.info("Eval results: %s" % eval_results)
+            tf.logging.info("Starting to evaluate.")
+            eval_results = densenet_estimator.evaluate(
+                input_fn=ImageNetInput(False),
+                steps=_NUM_EVAL_IMAGES // FLAGS.eval_batch_size)
+            tf.logging.info("Eval results: %s" % eval_results)
 
-  else:
+    else:
 
-    def terminate_eval():
-      tf.logging.info("Terminating eval after %d seconds of no checkpoints" %
-                      FLAGS.eval_timeout)
-      return True
+        def terminate_eval():
+            tf.logging.info("Terminating eval after %d seconds of no checkpoints" %
+                            FLAGS.eval_timeout)
+            return True
 
-    # Run evaluation when there"s a new checkpoint
-    # If the evaluation worker is delayed in processing a new checkpoint,
-    # the checkpoint file may be deleted by the trainer before it can be
-    # evaluated.
-    # Ignore the error in this case.
-    for ckpt in evaluation.checkpoints_iterator(
-        FLAGS.model_dir,
-        min_interval_secs=FLAGS.min_eval_interval,
-        timeout=FLAGS.eval_timeout,
-        timeout_fn=terminate_eval):
+        # Run evaluation when there"s a new checkpoint
+        # If the evaluation worker is delayed in processing a new checkpoint,
+        # the checkpoint file may be deleted by the trainer before it can be
+        # evaluated.
+        # Ignore the error in this case.
+        for ckpt in evaluation.checkpoints_iterator(
+                FLAGS.model_dir,
+                min_interval_secs=FLAGS.min_eval_interval,
+                timeout=FLAGS.eval_timeout,
+                timeout_fn=terminate_eval):
 
-      tf.logging.info("Starting to evaluate.")
-      try:
-        eval_results = densenet_estimator.evaluate(
-            input_fn=ImageNetInput(False),
-            steps=eval_steps,
-            checkpoint_path=ckpt)
-        tf.logging.info("Eval results: %s" % eval_results)
-      except tf.errors.NotFoundError:
-        tf.logging.info("Checkpoint %s no longer exists, skipping checkpoint")
+            tf.logging.info("Starting to evaluate.")
+            try:
+                eval_results = densenet_estimator.evaluate(
+                    input_fn=ImageNetInput(False),
+                    steps=eval_steps,
+                    checkpoint_path=ckpt)
+                tf.logging.info("Eval results: %s" % eval_results)
+            except tf.errors.NotFoundError:
+                tf.logging.info("Checkpoint %s no longer exists, skipping checkpoint")
 
 
 if __name__ == "__main__":
-  tf.logging.set_verbosity(tf.logging.INFO)
-  tf.app.run()
+    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.app.run()

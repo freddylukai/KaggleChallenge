@@ -32,23 +32,23 @@ spec:
         # The official TensorFlow 1.10 TPU model image built from https://github.com/tensorflow/tpu/blob/r1.10/tools/docker/Dockerfile.
         image: gcr.io/tensorflow/tpu-models:r1.10
         command:
-          - /bin/sh
-          - -c
-          - >
-            DEBIAN_FRONTEND=noninteractive apt-get install -y python-dev python-tk &&
-            pip install Cython matplotlib &&
-            pip install 'git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI' &&
-            python /tensorflow_tpu_models/models/official/retinanet/retinanet_main.py
-            --train_batch_size=64
-            --training_file_pattern=${DATA_BUCKET}/train-*
-            --resnet_checkpoint=${RESNET_CHECKPOINT}
-            --model_dir=${MODEL_BUCKET}
-            --hparams=image_size=640
-            --num_examples_per_epoch=6400
-            --num_epochs=1
+        - /bin/sh
+        - -c
+        - >
+          DEBIAN_FRONTEND=noninteractive apt-get install -y python-dev python-tk &&
+          pip install Cython matplotlib &&
+          pip install 'git+https://github.com/cocodataset/cocoapi#egg=pycocotools&subdirectory=PythonAPI' &&
+          python /tensorflow_tpu_models/models/official/retinanet/retinanet_main.py
+          --train_batch_size=64
+          --training_file_pattern=${DATA_BUCKET}/train-*
+          --resnet_checkpoint=${RESNET_CHECKPOINT}
+          --model_dir=${MODEL_BUCKET}
+          --hparams=image_size=640
+          --num_examples_per_epoch=6400
+          --num_epochs=1
         env:
-          # [REQUIRED] Must specify the Google Cloud Storage location where the
-          # training data is stored.
+        # [REQUIRED] Must specify the Google Cloud Storage location where the
+        # training data is stored.
         - name: DATA_BUCKET
           value: "gs://<my-data-bucket>"
           # [REQUIRED] Must specify the Google Cloud Storage location where the

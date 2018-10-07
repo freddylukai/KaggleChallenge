@@ -85,121 +85,120 @@ from six.moves.urllib.request import Request
 from six.moves.urllib.request import urlopen
 import tensorflow as tf
 
-
 flags.DEFINE_string('source_glob', None, 'The source TFRecord files to read '
-                    'from and push into Cloud Bigtable.')
+                                         'from and push into Cloud Bigtable.')
 flags.DEFINE_string('bigtable_instance', None, 'The Cloud Bigtable instance.')
 flags.DEFINE_string('bigtable_table', None, 'The table within the instance to '
-                    'write to.')
+                                            'write to.')
 flags.DEFINE_string('project', None, 'The Project to use. (Optional if running '
-                    'on a Compute Engine VM, as it can be auto-determined from '
-                    'the metadata service.)')
+                                     'on a Compute Engine VM, as it can be auto-determined from '
+                                     'the metadata service.)')
 flags.DEFINE_integer(
     'num_records', None, 'The approximate dataset size (used for padding '
-    'the appropriate number of zeros when constructing row keys). It should '
-    'not be smaller than the actual number of records.')
+                         'the appropriate number of zeros when constructing row keys). It should '
+                         'not be smaller than the actual number of records.')
 flags.DEFINE_integer('num_parallel_reads', None, 'The number of parallel reads '
-                     'from the source file system.')
+                                                 'from the source file system.')
 flags.DEFINE_string('column_family', 'ds', 'The column family to write the '
-                    'data into.')
+                                           'data into.')
 flags.DEFINE_string('column', 'd', 'The column name (qualifier) to write the '
-                    'data into.')
+                                   'data into.')
 flags.DEFINE_string('row_prefix', None, 'A prefix for each row key.')
 
 FLAGS = flags.FLAGS
 
 
 def request_gce_metadata(path):
-  req = Request('http://metadata/computeMetadata/v1/%s' % path,
-                headers={'Metadata-Flavor': 'Google'})
-  resp = urlopen(req, timeout=2)
-  return tf.compat.as_str(resp.read())
+    req = Request('http://metadata/computeMetadata/v1/%s' % path,
+                  headers={'Metadata-Flavor': 'Google'})
+    resp = urlopen(req, timeout=2)
+    return tf.compat.as_str(resp.read())
 
 
 def project_from_metadata():
-  return request_gce_metadata('project/project-id')
+    return request_gce_metadata('project/project-id')
 
 
 def print_sources():
-  all_files = tf.gfile.Glob(FLAGS.source_glob)
-  # TODO(saeta): consider stat'ing all files to determine total dataset size.
-  print('Found %d files (from "%s" to "%s")' % (len(all_files), all_files[0],
-                                                all_files[-1]))
+    all_files = tf.gfile.Glob(FLAGS.source_glob)
+    # TODO(saeta): consider stat'ing all files to determine total dataset size.
+    print('Found %d files (from "%s" to "%s")' % (len(all_files), all_files[0],
+                                                  all_files[-1]))
 
 
 def validate_source_flags():
-  if FLAGS.source_glob is None:
-    raise ValueError('--source_glob must be specified.')
+    if FLAGS.source_glob is None:
+        raise ValueError('--source_glob must be specified.')
 
 
 def build_source_dataset():
-  validate_source_flags()
-  print_sources()
-  files = tf.data.Dataset.list_files(FLAGS.source_glob)
-  dataset = tf.data.TFRecordDataset(files,
-                                    num_parallel_reads=FLAGS.num_parallel_reads)
-  return dataset
+    validate_source_flags()
+    print_sources()
+    files = tf.data.Dataset.list_files(FLAGS.source_glob)
+    dataset = tf.data.TFRecordDataset(files,
+                                      num_parallel_reads=FLAGS.num_parallel_reads)
+    return dataset
 
 
 def pad_width(num_records):
-  return len('%d' % (num_records - 1))
+    return len('%d' % (num_records - 1))
 
 
 def build_row_key_dataset(num_records, row_prefix):
-  if num_records is not None:
-    ds = tf.data.Dataset.range(num_records)
-  else:
-    ds = tf.contrib.data.Counter()
-  if num_records is None:
-    width = 10
-  else:
-    width = pad_width(num_records)
-  ds = ds.map(lambda idx: tf.as_string(idx, width=width, fill='0'))
-  if row_prefix is not None:
-    ds = ds.map(lambda idx: tf.string_join([row_prefix, idx]))
-  return ds
+    if num_records is not None:
+        ds = tf.data.Dataset.range(num_records)
+    else:
+        ds = tf.contrib.data.Counter()
+    if num_records is None:
+        width = 10
+    else:
+        width = pad_width(num_records)
+    ds = ds.map(lambda idx: tf.as_string(idx, width=width, fill='0'))
+    if row_prefix is not None:
+        ds = ds.map(lambda idx: tf.string_join([row_prefix, idx]))
+    return ds
 
 
 def make_bigtable_client_and_table():
-  project = FLAGS.project
-  if project is None:
-    print('--project was not set on the command line, attempting to infer it '
-          'from the metadata service...')
-    project = project_from_metadata()
-  if project is None:
-    raise ValueError('Please set a project on the command line.')
-  instance = FLAGS.bigtable_instance
-  if instance is None:
-    raise ValueError('Please set an instance on the command line.')
-  table_name = FLAGS.bigtable_table
-  if table_name is None:
-    raise ValueError('Please set a table on the command line.')
-  client = tf.contrib.cloud.BigtableClient(project, instance)
-  table = client.table(table_name)
-  return (client, table)
+    project = FLAGS.project
+    if project is None:
+        print('--project was not set on the command line, attempting to infer it '
+              'from the metadata service...')
+        project = project_from_metadata()
+    if project is None:
+        raise ValueError('Please set a project on the command line.')
+    instance = FLAGS.bigtable_instance
+    if instance is None:
+        raise ValueError('Please set an instance on the command line.')
+    table_name = FLAGS.bigtable_table
+    if table_name is None:
+        raise ValueError('Please set a table on the command line.')
+    client = tf.contrib.cloud.BigtableClient(project, instance)
+    table = client.table(table_name)
+    return (client, table)
 
 
 def write_to_bigtable_op(aggregate_dataset, bigtable):
-  return bigtable.write(aggregate_dataset,
-                        column_families=[FLAGS.column_family],
-                        columns=[FLAGS.column])
+    return bigtable.write(aggregate_dataset,
+                          column_families=[FLAGS.column_family],
+                          columns=[FLAGS.column])
 
 
 def main(argv):
-  if len(argv) > 1:
-    raise ValueError('Too many command-line arguments.')
-  source_dataset = build_source_dataset()
-  row_key_dataset = build_row_key_dataset(FLAGS.num_records, FLAGS.row_prefix)
-  aggregate_dataset = tf.data.Dataset.zip((row_key_dataset, source_dataset))
-  _, table = make_bigtable_client_and_table()
-  write_op = write_to_bigtable_op(aggregate_dataset, table)
+    if len(argv) > 1:
+        raise ValueError('Too many command-line arguments.')
+    source_dataset = build_source_dataset()
+    row_key_dataset = build_row_key_dataset(FLAGS.num_records, FLAGS.row_prefix)
+    aggregate_dataset = tf.data.Dataset.zip((row_key_dataset, source_dataset))
+    _, table = make_bigtable_client_and_table()
+    write_op = write_to_bigtable_op(aggregate_dataset, table)
 
-  print('Dataset ops created; about to create the session.')
-  sess = tf.Session()
-  print('Starting transfer...')
-  sess.run(write_op)
-  print('Complete!')
+    print('Dataset ops created; about to create the session.')
+    sess = tf.Session()
+    print('Starting transfer...')
+    sess.run(write_op)
+    print('Complete!')
 
 
 if __name__ == '__main__':
-  tf.app.run(main)
+    tf.app.run(main)

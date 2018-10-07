@@ -25,18 +25,18 @@ spec:
         # The official TensorFlow 1.10 TPU model image built from https://github.com/tensorflow/tpu/blob/r1.10/tools/docker/Dockerfile.
         image: gcr.io/tensorflow/tpu-models:r1.10
         command:
-          - python
-          - /tensorflow_tpu_models/tools/datasets/imagenet_to_gcs.py
-          - --project=$(PROJECT_NAME)
-          - --gcs_output_path=$(DATA_BUCKET)
-          - --local_scratch_dir=/scratch-dir
-          - --imagenet_username=$(IMAGENET_USERNAME)
-          - --imagenet_access_key=$(IMAGENET_PASSWORD)
+        - python
+        - /tensorflow_tpu_models/tools/datasets/imagenet_to_gcs.py
+        - --project=$(PROJECT_NAME)
+        - --gcs_output_path=$(DATA_BUCKET)
+        - --local_scratch_dir=/scratch-dir
+        - --imagenet_username=$(IMAGENET_USERNAME)
+        - --imagenet_access_key=$(IMAGENET_PASSWORD)
         volumeMounts:
         - mountPath: /scratch-dir
           name: scratch-volume
         env:
-          # [REQUIRED] Must specify your project name.
+        # [REQUIRED] Must specify your project name.
         - name: PROJECT_NAME
           value: ""
           # [REQUIRED] Must specify the Google Cloud Storage location where the
@@ -60,7 +60,7 @@ metadata:
   name: scratch-disk-imagenet
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 300Gi

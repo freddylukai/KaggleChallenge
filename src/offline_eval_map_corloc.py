@@ -38,7 +38,6 @@ sys.path.append('C:\\Users\\bones\\models')
 sys.path.append('C:\\Users\\bones\\models\\research')
 sys.path.append('C:\\Users\\bones\\models\\research\\slim')
 
-
 import csv
 import os
 import re
@@ -63,116 +62,116 @@ FLAGS = flags.FLAGS
 
 
 def _generate_sharded_filenames(filename):
-  m = re.search(r'@(\d{1,})', filename)
-  if m:
-    num_shards = int(m.group(1))
-    return [
-        re.sub(r'@(\d{1,})', '-%.5d-of-%.5d' % (i, num_shards), filename)
-        for i in range(num_shards)
-    ]
-  else:
-    return [filename]
+    m = re.search(r'@(\d{1,})', filename)
+    if m:
+        num_shards = int(m.group(1))
+        return [
+            re.sub(r'@(\d{1,})', '-%.5d-of-%.5d' % (i, num_shards), filename)
+            for i in range(num_shards)
+        ]
+    else:
+        return [filename]
 
 
 def _generate_filenames(filenames):
-  result = []
-  for filename in filenames:
-    result += _generate_sharded_filenames(filename)
-  return result
+    result = []
+    for filename in filenames:
+        result += _generate_sharded_filenames(filename)
+    return result
 
 
 def read_data_and_evaluate(input_config, eval_config):
-  """Reads pre-computed object detections and groundtruth from tf_record.
+    """Reads pre-computed object detections and groundtruth from tf_record.
 
-  Args:
-    input_config: input config proto of type
-      object_detection.protos.InputReader.
-    eval_config: evaluation config proto of type
-      object_detection.protos.EvalConfig.
+    Args:
+      input_config: input config proto of type
+        object_detection.protos.InputReader.
+      eval_config: evaluation config proto of type
+        object_detection.protos.EvalConfig.
 
-  Returns:
-    Evaluated detections metrics.
+    Returns:
+      Evaluated detections metrics.
 
-  Raises:
-    ValueError: if input_reader type is not supported or metric type is unknown.
-  """
-  if input_config.WhichOneof('input_reader') == 'tf_record_input_reader':
-    input_paths = input_config.tf_record_input_reader.input_path
+    Raises:
+      ValueError: if input_reader type is not supported or metric type is unknown.
+    """
+    if input_config.WhichOneof('input_reader') == 'tf_record_input_reader':
+        input_paths = input_config.tf_record_input_reader.input_path
 
-    categories = label_map_util.create_categories_from_labelmap(
-        input_config.label_map_path)
+        categories = label_map_util.create_categories_from_labelmap(
+            input_config.label_map_path)
 
-    object_detection_evaluators = evaluator.get_evaluators(
-        eval_config, categories)
-    # Support a single evaluator
-    object_detection_evaluator = object_detection_evaluators[0]
+        object_detection_evaluators = evaluator.get_evaluators(
+            eval_config, categories)
+        # Support a single evaluator
+        object_detection_evaluator = object_detection_evaluators[0]
 
-    skipped_images = 0
-    processed_images = 0
-    for input_path in _generate_filenames(input_paths):
-      tf.logging.info('Processing file: {0}'.format(input_path))
+        skipped_images = 0
+        processed_images = 0
+        for input_path in _generate_filenames(input_paths):
+            tf.logging.info('Processing file: {0}'.format(input_path))
 
-      record_iterator = tf.python_io.tf_record_iterator(path=input_path)
-      data_parser = tf_example_parser.TfExampleDetectionAndGTParser()
+            record_iterator = tf.python_io.tf_record_iterator(path=input_path)
+            data_parser = tf_example_parser.TfExampleDetectionAndGTParser()
 
-      for string_record in record_iterator:
-        tf.logging.log_every_n(tf.logging.INFO, 'Processed %d images...', 1000,
-                               processed_images)
-        processed_images += 1
+            for string_record in record_iterator:
+                tf.logging.log_every_n(tf.logging.INFO, 'Processed %d images...', 1000,
+                                       processed_images)
+                processed_images += 1
 
-        example = tf.train.Example()
-        example.ParseFromString(string_record)
-        decoded_dict = data_parser.parse(example)
-        if decoded_dict:
-          object_detection_evaluator.add_single_ground_truth_image_info(
-              decoded_dict[standard_fields.DetectionResultFields.key],
-              decoded_dict)
-          object_detection_evaluator.add_single_detected_image_info(
-              decoded_dict[standard_fields.DetectionResultFields.key],
-              decoded_dict)
-        else:
-          skipped_images += 1
-          tf.logging.info('Skipped images: {0}'.format(skipped_images))
+                example = tf.train.Example()
+                example.ParseFromString(string_record)
+                decoded_dict = data_parser.parse(example)
+                if decoded_dict:
+                    object_detection_evaluator.add_single_ground_truth_image_info(
+                        decoded_dict[standard_fields.DetectionResultFields.key],
+                        decoded_dict)
+                    object_detection_evaluator.add_single_detected_image_info(
+                        decoded_dict[standard_fields.DetectionResultFields.key],
+                        decoded_dict)
+                else:
+                    skipped_images += 1
+                    tf.logging.info('Skipped images: {0}'.format(skipped_images))
 
-    return object_detection_evaluator.evaluate()
+        return object_detection_evaluator.evaluate()
 
-  raise ValueError('Unsupported input_reader_config.')
+    raise ValueError('Unsupported input_reader_config.')
 
 
 def write_metrics(metrics, output_dir):
-  """Write metrics to the output directory.
+    """Write metrics to the output directory.
 
-  Args:
-    metrics: A dictionary containing metric names and values.
-    output_dir: Directory to write metrics to.
-  """
-  tf.logging.info('Writing metrics.')
+    Args:
+      metrics: A dictionary containing metric names and values.
+      output_dir: Directory to write metrics to.
+    """
+    tf.logging.info('Writing metrics.')
 
-  with open(os.path.join(output_dir, 'metrics.csv'), 'w') as csvfile:
-    metrics_writer = csv.writer(csvfile, delimiter=',')
-    for metric_name, metric_value in metrics.items():
-      metrics_writer.writerow([metric_name, str(metric_value)])
+    with open(os.path.join(output_dir, 'metrics.csv'), 'w') as csvfile:
+        metrics_writer = csv.writer(csvfile, delimiter=',')
+        for metric_name, metric_value in metrics.items():
+            metrics_writer.writerow([metric_name, str(metric_value)])
 
 
 def main(argv):
-  del argv
-  required_flags = ['input_config_path', 'eval_config_path', 'eval_dir']
-  for flag_name in required_flags:
-    if not getattr(FLAGS, flag_name):
-      raise ValueError('Flag --{} is required'.format(flag_name))
+    del argv
+    required_flags = ['input_config_path', 'eval_config_path', 'eval_dir']
+    for flag_name in required_flags:
+        if not getattr(FLAGS, flag_name):
+            raise ValueError('Flag --{} is required'.format(flag_name))
 
-  configs = config_util.get_configs_from_multiple_files(
-      eval_input_config_path=FLAGS.input_config_path,
-      eval_config_path=FLAGS.eval_config_path)
+    configs = config_util.get_configs_from_multiple_files(
+        eval_input_config_path=FLAGS.input_config_path,
+        eval_config_path=FLAGS.eval_config_path)
 
-  eval_config = configs['eval_config']
-  input_config = configs['eval_input_configs'][0]
+    eval_config = configs['eval_config']
+    input_config = configs['eval_input_configs'][0]
 
-  metrics = read_data_and_evaluate(input_config, eval_config)
+    metrics = read_data_and_evaluate(input_config, eval_config)
 
-  # Save metrics
-  write_metrics(metrics, FLAGS.eval_dir)
+    # Save metrics
+    write_metrics(metrics, FLAGS.eval_dir)
 
 
 if __name__ == '__main__':
-  tf.app.run(main)
+    tf.app.run(main)
