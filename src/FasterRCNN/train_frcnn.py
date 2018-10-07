@@ -141,7 +141,7 @@ try:
 	model_classifier.load_weights(C.base_net_weights, by_name=True)
 except Exception as e:
     print(e)
-    print('Could not load pretrained model weights. Weights can be found in the keras application folder https://github.com/fchollet/keras/tree/master/keras/applications')
+    print('Could not load pretrained model weights, copy the models to pretrained-models/. Weights can be found here: https://github.com/fchollet/deep-learning-models/releases')
     exit()
 
 optimizer = Adam(lr=1e-5)
