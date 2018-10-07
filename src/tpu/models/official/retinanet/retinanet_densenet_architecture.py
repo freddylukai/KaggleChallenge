@@ -190,9 +190,10 @@ def resize_bilinear(images, size, output_type):
 
 def create_block(input, n, depth, is_training_bn=False):
     k = 32
-    with tf.variable_scope("denseblock-%d-%d" %(n, depth)):
-        output = dense_block(input, k, is_training_bn)
-        input = tf.concat([input, output], axis=3)
+    for j in range(depth):
+        with tf.variable_scope("denseblock-%d-%d" %(n, j)):
+            output = dense_block(input, k, is_training_bn)
+            input = tf.concat([input, output], axis=3)
     return input
 
 

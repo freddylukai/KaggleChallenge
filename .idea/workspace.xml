@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1fa490fc-2de9-4586-97ec-b0606245ab66" name="Default Changelist" comment="densenet for retinanet implementation">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="1fa490fc-2de9-4586-97ec-b0606245ab66" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/tpu/models/official/inception/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/tpu/models/official/inception/inception_resnet_v2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/tpu/models/official/inception/inception_utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/tpu/models/official/inception/inception_v4.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_inceptionv4_architecture.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py" afterDir="false" />
     </list>
@@ -24,26 +27,26 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="gitignore" value="18" />
-          <entry key="py" value="2425" />
+          <entry key="py" value="2693" />
           <entry key="txt" value="122" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="140" />
-          <entry key="Python" value="2425" />
+          <entry key="Python" value="2693" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="gitignore" value="3" />
-          <entry key="py" value="32" />
+          <entry key="py" value="38" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="32" />
+          <entry key="Python" value="38" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages">
@@ -59,8 +62,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_architecture.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="640">
-              <caret line="559" column="25" lean-forward="true" selection-start-line="559" selection-start-column="25" selection-end-line="559" selection-end-column="25" />
+            <state relative-caret-position="504">
+              <caret line="316" column="4" selection-end-line="744" />
               <folding>
                 <element signature="e#872#890#0" expanded="true" />
                 <marker date="1538855361491" expanded="true" signature="21424:21435" ph="..." />
@@ -70,20 +73,63 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py">
+        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/inception/inception_v4.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5185">
-              <caret line="476" column="33" lean-forward="true" selection-start-line="476" selection-start-column="33" selection-end-line="476" selection-end-column="33" />
+            <state relative-caret-position="545">
+              <caret line="314" column="10" lean-forward="true" selection-start-line="314" selection-start-column="10" selection-end-line="314" selection-end-column="72" />
               <folding>
-                <element signature="e#872#890#0" expanded="true" />
-                <marker date="1538866402702" expanded="true" signature="5841:6027" ph="..." />
-                <marker date="1538866402702" expanded="true" signature="6056:7243" ph="..." />
+                <element signature="e#953#976#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="273">
+              <caret line="397" column="13" selection-start-line="397" selection-start-column="13" selection-end-line="397" selection-end-column="13" />
+              <folding>
+                <element signature="e#872#890#0" expanded="true" />
+                <marker date="1538868014433" expanded="true" signature="5868:6062" ph="..." />
+                <marker date="1538868014433" expanded="true" signature="6091:7278" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_inceptionv4_architecture.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2823">
+              <caret line="181" selection-start-line="181" selection-end-line="181" />
+              <folding>
+                <element signature="e#872#890#0" expanded="true" />
+                <marker date="1538871693016" expanded="true" signature="4725:5121" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/inception/inception_resnet_v2.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="323">
+              <caret line="19" column="3" selection-start-line="19" selection-start-column="3" selection-end-line="19" selection-end-column="3" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/inception/inception_utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="323">
+              <caret line="19" column="3" selection-start-line="19" selection-start-column="3" selection-end-line="19" selection-end-column="3" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/.gitignore">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="85">
@@ -93,19 +139,10 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/densenet/densenet_model.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="203">
-              <caret line="149" column="34" lean-forward="true" selection-start-line="149" selection-start-column="34" selection-end-line="149" selection-end-column="34" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1292">
-              <caret line="87" column="50" selection-start-line="87" selection-start-column="50" selection-end-line="87" selection-end-column="50" />
+            <state relative-caret-position="509">
+              <caret line="343" column="40" selection-start-line="343" selection-start-column="40" selection-end-line="343" selection-end-column="40" />
               <folding>
                 <element signature="e#728#766#0" expanded="true" />
               </folding>
@@ -116,25 +153,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_model.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="8058">
-              <caret line="482" column="40" selection-start-line="482" selection-start-column="40" selection-end-line="482" selection-end-column="40" />
+            <state relative-caret-position="2041">
+              <caret line="177" column="39" selection-start-line="177" selection-start-column="39" selection-end-line="177" selection-end-column="39" />
               <folding>
                 <element signature="e#1017#1055#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/__init__.py">
-          <provider selected="true" editor-type-id="text-editor" />
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/coco_metric.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="493">
-              <caret line="29" column="23" selection-start-line="29" selection-start-column="23" selection-end-line="29" selection-end-column="23" />
             </state>
           </provider>
         </entry>
@@ -174,8 +197,12 @@
         <option value="$PROJECT_DIR$/src/tpu/models/official/densenet/vgg_preprocessing.py" />
         <option value="$PROJECT_DIR$/src/tpu/models/official/densenet/densenet_imagenet.py" />
         <option value="$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_architecture.py" />
-        <option value="$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py" />
+        <option value="$PROJECT_DIR$/src/tpu/models/official/inception/inception_utils.py" />
+        <option value="$PROJECT_DIR$/src/tpu/models/official/inception/inception_resnet_v2.py" />
+        <option value="$PROJECT_DIR$/src/tpu/models/official/inception/inception_v4.py" />
+        <option value="$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_inceptionv4_architecture.py" />
       </list>
     </option>
   </component>
@@ -185,7 +212,9 @@
     <option name="width" value="1936" />
     <option name="height" value="1056" />
   </component>
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
@@ -240,6 +269,15 @@
               <item name="tpu" type="462c0819:PsiDirectoryNode" />
               <item name="models" type="462c0819:PsiDirectoryNode" />
               <item name="official" type="462c0819:PsiDirectoryNode" />
+              <item name="inception" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="KaggleChallenge" type="b2602c69:ProjectViewProjectNode" />
+              <item name="KaggleChallenge" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="tpu" type="462c0819:PsiDirectoryNode" />
+              <item name="models" type="462c0819:PsiDirectoryNode" />
+              <item name="official" type="462c0819:PsiDirectoryNode" />
               <item name="retinanet" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
@@ -250,7 +288,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -294,7 +332,14 @@
       <option name="project" value="LOCAL" />
       <updated>1538852564291</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="densenet for retinanet implementation">
+      <created>1538866531201</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1538866531201</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -331,7 +376,8 @@
     </ignored-roots>
     <MESSAGE value="trying to add base code for RetinaNet" />
     <MESSAGE value="fixing imports to match python3" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixing imports to match python3" />
+    <MESSAGE value="densenet for retinanet implementation" />
+    <option name="LAST_COMMIT_MESSAGE" value="densenet for retinanet implementation" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/object_detection/matcher.py">
@@ -433,26 +479,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1292">
-          <caret line="87" column="50" selection-start-line="87" selection-start-column="50" selection-end-line="87" selection-end-column="50" />
-          <folding>
-            <element signature="e#728#766#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="8058">
-          <caret line="482" column="40" selection-start-line="482" selection-start-column="40" selection-end-line="482" selection-end-column="40" />
-          <folding>
-            <element signature="e#1017#1055#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/tpu/models/official/__init__.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -463,33 +489,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="509">
+          <caret line="343" column="40" selection-start-line="343" selection-start-column="40" selection-end-line="343" selection-end-column="40" />
+          <folding>
+            <element signature="e#728#766#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/tpu/models/official/densenet/densenet_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="203">
-          <caret line="149" column="34" lean-forward="true" selection-start-line="149" selection-start-column="34" selection-end-line="149" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_architecture.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="640">
-          <caret line="559" column="25" lean-forward="true" selection-start-line="559" selection-start-column="25" selection-end-line="559" selection-end-column="25" />
-          <folding>
-            <element signature="e#872#890#0" expanded="true" />
-            <marker date="1538855361491" expanded="true" signature="21424:21435" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5185">
-          <caret line="476" column="33" lean-forward="true" selection-start-line="476" selection-start-column="33" selection-end-line="476" selection-end-column="33" />
-          <folding>
-            <element signature="e#872#890#0" expanded="true" />
-            <marker date="1538866402702" expanded="true" signature="5841:6027" ph="..." />
-            <marker date="1538866402702" expanded="true" signature="6056:7243" ph="..." />
-          </folding>
+        <state relative-caret-position="458">
+          <caret line="157" column="20" selection-start-line="157" selection-start-column="20" selection-end-line="157" selection-end-column="20" />
         </state>
       </provider>
     </entry>
@@ -497,6 +510,81 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="85">
           <caret line="5" column="6" selection-start-line="5" selection-start-column="6" selection-end-line="5" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/inception/inception_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="19" column="3" selection-start-line="19" selection-start-column="3" selection-end-line="19" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_architecture.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="504">
+          <caret line="316" column="4" selection-end-line="744" />
+          <folding>
+            <element signature="e#872#890#0" expanded="true" />
+            <marker date="1538855361491" expanded="true" signature="21424:21435" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/inception/inception_resnet_v2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="19" column="3" selection-start-line="19" selection-start-column="3" selection-end-line="19" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://C:/ProgramData/Anaconda3/envs/tensorflow-dev/Lib/site-packages/tensorflow/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="466">
+          <caret line="606" selection-start-line="606" selection-end-line="606" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/inception/inception_v4.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="545">
+          <caret line="314" column="10" lean-forward="true" selection-start-line="314" selection-start-column="10" selection-end-line="314" selection-end-column="72" />
+          <folding>
+            <element signature="e#953#976#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2041">
+          <caret line="177" column="39" selection-start-line="177" selection-start-column="39" selection-end-line="177" selection-end-column="39" />
+          <folding>
+            <element signature="e#1017#1055#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_inceptionv4_architecture.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2823">
+          <caret line="181" selection-start-line="181" selection-end-line="181" />
+          <folding>
+            <element signature="e#872#890#0" expanded="true" />
+            <marker date="1538871693016" expanded="true" signature="4725:5121" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/tpu/models/official/retinanet/retinanet_densenet_architecture.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="273">
+          <caret line="397" column="13" selection-start-line="397" selection-start-column="13" selection-end-line="397" selection-end-column="13" />
+          <folding>
+            <element signature="e#872#890#0" expanded="true" />
+            <marker date="1538868014433" expanded="true" signature="5868:6062" ph="..." />
+            <marker date="1538868014433" expanded="true" signature="6091:7278" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>
