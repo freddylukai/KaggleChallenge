@@ -45,6 +45,8 @@ if options.parser == 'pascal_voc':
 	from keras_frcnn.pascal_voc_parser import get_data
 elif options.parser == 'simple':
 	from keras_frcnn.simple_parser import get_data
+elif options.parser == 'rsna':
+    from keras_frcnn.rsna_parser import  get_data
 else:
 	raise ValueError("Command line option parser must be one of 'pascal_voc' or 'simple'")
 
