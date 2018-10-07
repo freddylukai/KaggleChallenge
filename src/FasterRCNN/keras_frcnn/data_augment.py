@@ -1,7 +1,7 @@
-import cv2
 import numpy as np
 import copy
-
+import utils
+import cv2
 
 def augment(img_data, config, augment=True):
 	assert 'filepath' in img_data
@@ -11,7 +11,7 @@ def augment(img_data, config, augment=True):
 
 	img_data_aug = copy.deepcopy(img_data)
 
-	img = cv2.imread(img_data_aug['filepath'])
+	img = utils.imread(img_data_aug['filepath'])
 
 	if augment:
 		rows, cols = img.shape[:2]

@@ -11,6 +11,7 @@ from keras import backend as K
 from keras.layers import Input
 from keras.models import Model
 from keras_frcnn import roi_helpers
+from keras_frcnn import utils
 
 sys.setrecursionlimit(40000)
 
@@ -154,7 +155,7 @@ for idx, img_name in enumerate(sorted(os.listdir(img_path))):
 	st = time.time()
 	filepath = os.path.join(img_path,img_name)
 
-	img = cv2.imread(filepath)
+	img = utils.imread(filepath)
 
 	X, ratio = format_img(img, C)
 

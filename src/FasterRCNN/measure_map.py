@@ -13,7 +13,7 @@ from keras.models import Model
 from keras_frcnn import roi_helpers
 from keras_frcnn import data_generators
 from sklearn.metrics import average_precision_score
-
+from keras_frcnn import utils
 
 def get_map(pred, gt, f):
 	T = {}
@@ -192,7 +192,7 @@ for idx, img_data in enumerate(test_imgs):
 	st = time.time()
 	filepath = img_data['filepath']
 
-	img = cv2.imread(filepath)
+	img = utils.imread(filepath)
 
 	X, fx, fy = format_img(img, C)
 
