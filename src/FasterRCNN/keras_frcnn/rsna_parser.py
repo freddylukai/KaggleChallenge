@@ -51,4 +51,4 @@ def get_data(input_path):
 
 
     # Returns list of data, mapping from label to number, and the count of labels (only one in our case)
-    return list(parsed.values()), {PNEUMONIA_LABEL: 0}, {PNEUMONIA_LABEL: counter}
+    return list(parsed.values()), {PNEUMONIA_LABEL: counter}, {PNEUMONIA_LABEL: 0}
