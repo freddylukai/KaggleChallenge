@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-import utils
+from .utils import imread
 import cv2
 
 def augment(img_data, config, augment=True):
@@ -11,7 +11,7 @@ def augment(img_data, config, augment=True):
 
 	img_data_aug = copy.deepcopy(img_data)
 
-	img = utils.imread(img_data_aug['filepath'])
+	img = imread(img_data_aug['filepath'])
 
 	if augment:
 		rows, cols = img.shape[:2]
