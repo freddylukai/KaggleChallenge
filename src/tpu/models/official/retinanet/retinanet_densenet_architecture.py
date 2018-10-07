@@ -197,8 +197,7 @@ def create_block(input, n, depth, is_training_bn=False):
     return input
 
 
-def densenet(densenet_depth):
-    depths = [6, 12, 24, 16]
+def densenet():
     k = 32
 
     def model(inputs, is_training_bn=False):
@@ -230,7 +229,7 @@ def densenet(densenet_depth):
         c4 = create_block(c3, 2, 24, is_training_bn)
         num_channels += k
         num_channels /= 2
-        c4 = transition_layer(c3, num_channels, is_training_bn)
+        c4 = transition_layer(c4, num_channels, is_training_bn)
 
         c5 = create_block(c4, 3, 16, is_training_bn)
 
@@ -372,12 +371,11 @@ def retinanet(features,
               max_level=7,
               num_classes=90,
               num_anchors=6,
-              resnet_depth=50,
               use_nearest_upsampling=True,
               is_training_bn=False):
   """RetinaNet classification and regression model."""
   # create feature pyramid networks
-  feats = densenet_fpn(features, min_level, max_level, resnet_depth,
+  feats = densenet_fpn(features, min_level, max_level,
                      is_training_bn, use_nearest_upsampling)
   # add class net and box net in RetinaNet. The class net and the box net are
   # shared among all the levels.
