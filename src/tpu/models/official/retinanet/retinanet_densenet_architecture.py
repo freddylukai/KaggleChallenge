@@ -411,7 +411,7 @@ def remove_variables(variables, resnet_depth=50):
 
   """
   var_list = [v for v in variables
-              if v.name.find('resnet%s/conv2d/' % resnet_depth) == -1]
+              if v.name.find('densenet%s/conv2d/' % resnet_depth) == -1]
   return var_list
 
 
