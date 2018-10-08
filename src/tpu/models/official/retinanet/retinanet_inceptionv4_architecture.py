@@ -30,7 +30,7 @@ slim = tf.contrib.slim
 _WEIGHT_DECAY = 1e-4
 _BATCH_NORM_DECAY = 0.997
 _BATCH_NORM_EPSILON = 1e-4
-_RESNET_MAX_LEVEL = 7
+_RESNET_MAX_LEVEL = 5
 
 
 def batch_norm_relu(inputs,
@@ -353,35 +353,34 @@ def inception_builder():
                     with tf.variable_scope('Branch_1'):
                         branch_1 = slim.max_pool2d(c3, [3, 3], stride=2, padding='VALID',
                                                    scope='MaxPool_1a_3x3')
-                    c4 = tf.concat(axis=3, values=[branch_0, branch_1])
+                    c3 = tf.concat(axis=3, values=[branch_0, branch_1])
 
                 # 35 x 35 x 384
                 # 4 x Inception-A blocks
-                c5 = c4
+                c4 = c3
                 for idx in range(4):
                     block_scope = 'Mixed_5' + chr(ord('b') + idx)
-                    c5 = block_inception_a(c5, block_scope)
+                    c4 = block_inception_a(c4, block_scope)
                 # 35 x 35 x 384
                 # Reduction-A block
-                c5 = block_reduction_a(c5, 'Mixed_6a')
+                c4 = block_reduction_a(c4, 'Mixed_6a')
 
-                c6 = c5
+                c5 = c4
                 # 17 x 17 x 1024
                 # 7 x Inception-B blocks
                 for idx in range(7):
                     block_scope = 'Mixed_6' + chr(ord('b') + idx)
-                    c6 = block_inception_b(c6, block_scope)
+                    c5 = block_inception_b(c5, block_scope)
                 # 17 x 17 x 1024
                 # Reduction-B block
-                c6 = block_reduction_b(net, 'Mixed_7a')
+                c5 = block_reduction_b(c5, 'Mixed_7a')
 
-                c7 = c6
                 # 8 x 8 x 1536
                 # 3 x Inception-C blocks
                 for idx in range(3):
                     block_scope = 'Mixed_7' + chr(ord('b') + idx)
-                    c7 = block_inception_c(c7, block_scope)
-        return c2, c3, c4, c5, c6, c7
+                    c5 = block_inception_c(c5, block_scope)
+        return c2, c3, c4, c5
     return model
 
 
@@ -413,20 +412,18 @@ def retinanet_no_fpn(features,
 
 def inception_fpn(features,
                  min_level=3,
-                 max_level=9,
+                 max_level=7,
                  is_training_bn=False,
                  use_nearest_upsampling=True):
     with tf.variable_scope("inceptionv4"):
         inception_fn = inception_builder()
-        u2, u3, u4, u5, u6, u7 = inception_fn(features, is_training_bn)
+        u2, u3, u4, u5 = inception_fn(features, is_training_bn)
 
     feats_bottom_up = {
         2: u2,
         3: u3,
         4: u4,
         5: u5,
-        6: u6,
-        7: u7
     }
 
     with tf.variable_scope("inception_fpn"):
