@@ -7,6 +7,7 @@
 .idea/
 *.h5
 *.hdf5
+**/.idea
 
 # Some binaries created by tf, for now we don't want to commit them.
 **/inference
