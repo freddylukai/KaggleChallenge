@@ -219,21 +219,21 @@ def densenet():
         v = tf.layers.max_pooling2d(v, pool_size=3, strides=2, padding="same")
 
         c2 = create_block(v, 0, 6, is_training_bn)
-        num_channels += k
+        num_channels += 6*k
         num_channels /= 2
-        c2 = transition_layer(c2, num_channels, is_training_bn)
 
-        c3 = create_block(c2, 1, 12, is_training_bn)
-        num_channels += k
+        c3 = transition_layer(c2, num_channels, is_training_bn)
+        c3 = create_block(c3, 1, 12, is_training_bn)
+        num_channels += 12*k
         num_channels /= 2
-        c3 = transition_layer(c3, num_channels, is_training_bn)
 
-        c4 = create_block(c3, 2, 24, is_training_bn)
-        num_channels += k
+        c4 = transition_layer(c3, num_channels, is_training_bn)
+        c4 = create_block(c4, 2, 24, is_training_bn)
+        num_channels += 24*k
         num_channels /= 2
-        c4 = transition_layer(c4, num_channels, is_training_bn)
 
-        c5 = create_block(c4, 3, 16, is_training_bn)
+        c5 = transition_layer(c4, num_channels, is_training_bn)
+        c5 = create_block(c5, 3, 16, is_training_bn)
 
         return c2, c3, c4, c5
 

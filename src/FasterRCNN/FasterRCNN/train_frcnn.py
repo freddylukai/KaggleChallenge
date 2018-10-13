@@ -1,4 +1,10 @@
 from __future__ import division
+import os
+import sys
+print(os.path.join(os.path.dirname(__file__),'keras_frcnn'))
+print(sys.version)
+sys.path.append(os.path.join(os.path.dirname(__file__),'keras_frcnn'))
+
 import random
 import pprint
 import sys
@@ -11,10 +17,11 @@ from keras import backend as K
 from keras.optimizers import Adam, SGD, RMSprop
 from keras.layers import Input
 from keras.models import Model
-from keras_frcnn import config, data_generators
-from keras_frcnn import losses as losses
-import keras_frcnn.roi_helpers as roi_helpers
+from .keras_frcnn import config, data_generators
+from .keras_frcnn import losses as losses
+from .keras_frcnn import roi_helpers
 from keras.utils import generic_utils
+from tensorflow.python.lib.io import file_io
 
 sys.setrecursionlimit(40000)
 
@@ -25,10 +32,10 @@ parser.add_option("-o", "--parser", dest="parser", help="Parser to use. One of s
 				default="pascal_voc")
 parser.add_option("-n", "--num_rois", type="int", dest="num_rois", help="Number of RoIs to process at once.", default=32)
 parser.add_option("--network", dest="network", help="Base network to use. Supports vgg or resnet50.", default='resnet50')
-parser.add_option("--hf", dest="horizontal_flips", help="Augment with horizontal flips in training. (Default=false).", action="store_true", default=False)
-parser.add_option("--vf", dest="vertical_flips", help="Augment with vertical flips in training. (Default=false).", action="store_true", default=False)
-parser.add_option("--rot", "--rot_90", dest="rot_90", help="Augment with 90 degree rotations in training. (Default=false).",
-				  action="store_true", default=False)
+parser.add_option("--hf", dest="horizontal_flips", help="Augment with horizontal flips in training. (Default=true).", action="store_true", default=True)
+parser.add_option("--vf", dest="vertical_flips", help="Augment with vertical flips in training. (Default=true).", action="store_true", default=True)
+parser.add_option("--rot", "--rot_90", dest="rot_90", help="Augment with 90 degree rotations in training. (Default=true).",
+				  action="store_true", default=True)
 parser.add_option("--num_epochs", type="int", dest="num_epochs", help="Number of epochs.", default=2000)
 parser.add_option("--config_filename", dest="config_filename", help=
 				"Location to store all the metadata related to the training (to be used when testing).",
@@ -36,19 +43,28 @@ parser.add_option("--config_filename", dest="config_filename", help=
 parser.add_option("--output_weight_path", dest="output_weight_path", help="Output path for weights.", default='./model_frcnn.hdf5')
 parser.add_option("--input_weight_path", dest="input_weight_path", help="Input path for weights. If not specified, will try to load default weights provided by keras.")
 
+parser.add_option("--job-dir", dest="job_dir", help="wtf")
+
+parser.add_option("--prev-weights", dest="prev_weights", help="weights from previous training session")
+
+
+
 (options, args) = parser.parse_args()
 
 if not options.train_path:   # if filename is not given
 	parser.error('Error: path to training data must be specified. Pass --path to command line')
 
 if options.parser == 'pascal_voc':
-	from keras_frcnn.pascal_voc_parser import get_data
+	from .keras_frcnn.pascal_voc_parser import get_data
 elif options.parser == 'simple':
-	from keras_frcnn.simple_parser import get_data
+	from .keras_frcnn.simple_parser import get_data
 elif options.parser == 'rsna':
-    from keras_frcnn.rsna_parser import  get_data
+    from .keras_frcnn.rsna_parser import  get_data
 else:
 	raise ValueError("Command line option parser must be one of 'pascal_voc' or 'simple'")
+
+
+job_dir = options.job_dir
 
 # pass the settings from the command line, and persist them in the config object
 C = config.Config()
@@ -62,9 +78,9 @@ C.num_rois = int(options.num_rois)
 
 if options.network == 'vgg':
 	C.network = 'vgg'
-	from keras_frcnn import vgg as nn
+	from .keras_frcnn import vgg as nn
 elif options.network == 'resnet50':
-	from keras_frcnn import resnet as nn
+	from .keras_frcnn import resnet as nn
 	C.network = 'resnet50'
 else:
 	print('Not a valid model')
@@ -93,10 +109,10 @@ pprint.pprint(classes_count)
 print('Num classes (including bg) = {}'.format(len(classes_count)))
 
 config_output_filename = options.config_filename
+config_output_path = os.path.join(job_dir, config_output_filename)
 
-with open(config_output_filename, 'wb') as config_f:
-	pickle.dump(C,config_f)
-	print('Config has been written to {}, and can be loaded when testing to ensure correct results'.format(config_output_filename))
+with file_io.FileIO(config_output_path, mode='w+') as f:
+	pickle.dump(C, f)
 
 random.shuffle(all_imgs)
 
@@ -134,21 +150,51 @@ model_classifier = Model([img_input, roi_input], classifier)
 
 # this is a model that holds both the RPN and the classifier, used to load/save weights for the models
 model_all = Model([img_input, roi_input], rpn[:2] + classifier)
+if C.load_weights:
+	try:
+		print('loading weights from {}'.format(C.base_net_weights))
+		model_file = file_io.FileIO(os.path.join(job_dir, C.base_net_weights), mode='rb')
+		temp_model_location = './temp_model.h5'
+		temp_model_file = open(temp_model_location, 'wb')
+		temp_model_file.write(model_file.read())
+		temp_model_file.close()
+		model_file.close()
 
-try:
-	print('loading weights from {}'.format(C.base_net_weights))
-	model_rpn.load_weights(C.base_net_weights, by_name=True)
-	model_classifier.load_weights(C.base_net_weights, by_name=True)
-except Exception as e:
-    print(e)
-    print('Could not load pretrained model weights, copy the models to pretrained-models/. Weights can be found here: https://github.com/fchollet/deep-learning-models/releases')
-    exit()
+		model_rpn.load_weights(temp_model_location, by_name=True)
+		model_classifier.load_weights(temp_model_location, by_name=True)
+	except Exception as e:
+		print(e)
+		print('Could not load pretrained model weights, copy the models to pretrained-models/. Weights can be found here: https://github.com/fchollet/deep-learning-models/releases')
+		exit()
+else:
+	print("Not loading pre trained weights")
+
+def save_model(model_all, name):
+	global C, job_dir
+	print("Saving ", name)
+	model_all.save_weights(C.model_path)
+
+	with file_io.FileIO(C.model_path, mode='rb') as f:
+		with file_io.FileIO(os.path.join(job_dir, '%s.hdf5' % name), mode='wb+') as of:
+			of.write(f.read())
 
 optimizer = Adam(lr=1e-5)
 optimizer_classifier = Adam(lr=1e-5)
 model_rpn.compile(optimizer=optimizer, loss=[losses.rpn_loss_cls(num_anchors), losses.rpn_loss_regr(num_anchors)])
 model_classifier.compile(optimizer=optimizer_classifier, loss=[losses.class_loss_cls, losses.class_loss_regr(len(classes_count)-1)], metrics={'dense_class_{}'.format(len(classes_count)): 'accuracy'})
 model_all.compile(optimizer='sgd', loss='mae')
+
+if options.prev_weights != None:
+	print('loading previous weights from {}'.format(options.prev_weights))
+	model_file = file_io.FileIO(os.path.join(job_dir, options.prev_weights), mode='rb')
+	temp_model_location = './temp_p_weights.hdf5'
+	temp_model_file = open(temp_model_location, 'wb')
+	temp_model_file.write(model_file.read())
+	temp_model_file.close()
+	model_file.close()
+
+	model_all.load_weights(temp_model_location, by_name=True)
+
 
 epoch_length = 1000
 num_epochs = int(options.num_epochs)
@@ -164,6 +210,7 @@ best_loss = np.Inf
 class_mapping_inv = {v: k for k, v in class_mapping.items()}
 print('Starting training')
 
+
 vis = True
 
 for epoch_num in range(num_epochs):
@@ -172,8 +219,6 @@ for epoch_num in range(num_epochs):
 	print('Epoch {}/{}'.format(epoch_num + 1, num_epochs))
 
 	while True:
-		try:
-
 			if len(rpn_accuracy_rpn_monitor) == epoch_length and C.verbose:
 				mean_overlapping_bboxes = float(sum(rpn_accuracy_rpn_monitor))/len(rpn_accuracy_rpn_monitor)
 				rpn_accuracy_rpn_monitor = []
@@ -183,6 +228,8 @@ for epoch_num in range(num_epochs):
 
 			X, Y, img_data = next(data_gen_train)
 
+			print(len(X))
+			print(len(Y))
 			loss_rpn = model_rpn.train_on_batch(X, Y)
 
 			P_rpn = model_rpn.predict_on_batch(X)
@@ -243,6 +290,9 @@ for epoch_num in range(num_epochs):
 
 			iter_num += 1
 
+			if iter_num % 200 == 0:
+				save_model(model_all, 'e_%d_checkpoint_%d' % (epoch_num, iter_num))
+
 			progbar.update(iter_num, [('rpn_cls', np.mean(losses[:iter_num, 0])), ('rpn_regr', np.mean(losses[:iter_num, 1])),
 									  ('detector_cls', np.mean(losses[:iter_num, 2])), ('detector_regr', np.mean(losses[:iter_num, 3]))])
 
@@ -272,13 +322,13 @@ for epoch_num in range(num_epochs):
 				if curr_loss < best_loss:
 					if C.verbose:
 						print('Total loss decreased from {} to {}, saving weights'.format(best_loss,curr_loss))
+
+					save_model(model_all, 'e_%d_loss_decreased' % epoch_num )
 					best_loss = curr_loss
-					model_all.save_weights(C.model_path)
 
 				break
 
-		except Exception as e:
-			print('Exception: {}'.format(e))
-			continue
+
+save_model(model_all, 'final_model')
 
 print('Training complete, exiting.')

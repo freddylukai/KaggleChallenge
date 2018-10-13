@@ -1,0 +1,4 @@
+- Add a csv file which maps from id -> train/test/validation?
+- read the csv and filter out the training data
+- Create folder structure according to epochs/iteration/jobdirname
+- Print rsna metric of testing dataset after each epoch?

@@ -2,7 +2,6 @@ from __future__ import division
 import os
 import cv2
 import numpy as np
-import sys
 import pickle
 from optparse import OptionParser
 import time
@@ -12,7 +11,10 @@ from keras.layers import Input
 from keras.models import Model
 from keras_frcnn import roi_helpers
 from keras_frcnn import utils
+from keras_frcnn import rsna_parser
+import sys
 
+sys.path.append("C:\\Users\\bones\\kaggle\\KaggleChallenge\\src\\FasterRCNN")
 sys.setrecursionlimit(40000)
 
 parser = OptionParser()
@@ -24,6 +26,7 @@ parser.add_option("--config_filename", dest="config_filename", help=
 				"Location to read the metadata related to the training (generated when training).",
 				default="config.pickle")
 parser.add_option("--network", dest="network", help="Base network to use. Supports vgg or resnet50.", default='resnet50')
+parser.add_option("--model_path", dest="model_path", help="h5 file path", default=None)
 
 (options, args) = parser.parse_args()
 
@@ -40,6 +43,12 @@ if C.network == 'resnet50':
 	import keras_frcnn.resnet as nn
 elif C.network == 'vgg':
 	import keras_frcnn.vgg as nn
+
+if options.model_path != None:
+	print("Using ", options.model_path)
+	C.model_path = options.model_path
+else:
+	print("Using default model path", C.model_path)
 
 # turn off any data augmentation at test time
 C.use_horizontal_flips = False
@@ -92,7 +101,7 @@ def get_real_coordinates(ratio, x1, y1, x2, y2):
 
 	return (real_x1, real_y1, real_x2 ,real_y2)
 
-class_mapping = C.class_mapping
+class_mapping = {rsna_parser.PNEUMONIA_LABEL: 0}
 
 if 'bg' not in class_mapping:
 	class_mapping['bg'] = len(class_mapping)
@@ -193,7 +202,6 @@ for idx, img_name in enumerate(sorted(os.listdir(img_path))):
 		[P_cls, P_regr] = model_classifier_only.predict([F, ROIs])
 
 		for ii in range(P_cls.shape[1]):
-
 			if np.max(P_cls[0, ii, :]) < bbox_threshold or np.argmax(P_cls[0, ii, :]) == (P_cls.shape[2] - 1):
 				continue
 
@@ -243,6 +251,6 @@ for idx, img_name in enumerate(sorted(os.listdir(img_path))):
 
 	print('Elapsed time = {}'.format(time.time() - st))
 	print(all_dets)
-	cv2.imshow('img', img)
-	cv2.waitKey(0)
+	#cv2.imshow('img', img)
+	#cv2.waitKey(0)
 	# cv2.imwrite('./results_imgs/{}.png'.format(idx),img)

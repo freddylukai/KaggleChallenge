@@ -5,6 +5,8 @@ class Config:
 
 	def __init__(self):
 
+		self.load_weights = False
+
 		self.verbose = True
 
 		self.network = 'resnet50'
@@ -21,7 +23,7 @@ class Config:
 		self.anchor_box_ratios = [[1, 1], [1./math.sqrt(2), 2./math.sqrt(2)], [2./math.sqrt(2), 1./math.sqrt(2)]]
 
 		# size to resize the smallest side of the image
-		self.im_size = 600
+		self.im_size = 1024
 
 		# image channel-wise mean to subtract
 		self.img_channel_mean = [103.939, 116.779, 123.68]
