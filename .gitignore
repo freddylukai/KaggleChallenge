@@ -8,6 +8,7 @@
 *.h5
 *.hdf5
 .idea/*
+.pickle
 
 # Some binaries created by tf, for now we don't want to commit them.
 **/inference
