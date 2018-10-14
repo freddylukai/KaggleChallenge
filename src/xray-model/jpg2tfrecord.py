@@ -31,28 +31,44 @@ def create_tf_example(image_buffer, label, width, height):
         'image/object/class/label': utils.int64_feature(label)
     }))
 
-def _process_image(filename):
+def _process_image(filename, imgTransformationCount=5):
 
   model_file = file_io.FileIO(filename, mode='rb')
   temp_model_location = './temp.png'
   temp_model_file = open(temp_model_location, 'wb')
   temp_model_file.write(model_file.read())
   temp_model_file.close()
-  image_data = cv2.imread(temp_model_location)
 
+  image_data = cv2.imread(temp_model_location)
   decoded = cv2.imencode('.png', image_data)[1].tostring()
   height, width, _ = image_data.shape
-  return decoded, height, width
+    
+  decoded_strings= list()
+  decoded_strings.append(decoded)
+  
+  # Generate more images per each original image by applying random transformations.
+  for i in range(imgTransformationCount):
+        im_trans_data = utils.transform_image(image_data)
+        trans_decoded = cv2.imencode('.png', im_trans_data)[1].tostring()
+        decoded_strings.append(trans_decoded)
+        
+  # Return the list of decoded strings along with height and weight of each image.
+  # Each transformed image is having the same shape as the original image.
+  return decoded_strings, height, width
 
 def _process_image_files_batch(output_file, filenames, synsets, labels):
 
   writer = tf.python_io.TFRecordWriter('tmp.record')
-
+    
   for filename, synset in zip(filenames, synsets):
-    image_buffer, height, width = _process_image(filename)
+    # The below _process_image returns 6 images. One original and 5 transformed.
+    decoded_image_strings, height, width = _process_image(filename)
     label = labels[synset]
-    example = create_tf_example(image_buffer, label, width, height)
-    writer.write(example.SerializeToString())
+    
+    # Create a tfrecord for each image.
+    for image_buffer in decoded_image_strings:
+      example = create_tf_example(image_buffer, label, width, height)
+      writer.write(example.SerializeToString())
 
   writer.close()
 

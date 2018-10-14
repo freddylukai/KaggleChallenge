@@ -117,8 +117,9 @@ def transform_image(image):
   print('New shape: {0}, {1}'.format(height_shift, width_shift))
   shifted = shift_image(rotated, height_shift, width_shift)  
 
-  width_zoom = np.random.uniform(0.5,1.5)
-  height_zoom = np.random.uniform(0.5, 1.5)
+  # Keep the zoom ratio to max of 10% for both zoom in and zoom out.
+  width_zoom = np.random.uniform(0.9,1.1)
+  height_zoom = np.random.uniform(0.9, 1.1)
   if(width_zoom, height_zoom) == (1,1):
     width_zoom, height_zoom = (1.1, 1.1)
   zoomed = zoom_image(shifted, height_zoom, width_zoom)
