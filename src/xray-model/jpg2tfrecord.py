@@ -139,8 +139,6 @@ if __name__ == '__main__':
 
     allowed_images = set([x['Image Index'] for _, x in dataentry.iterrows() if '|' not in x['Finding Labels']])
 
-    allowed_images = set(list(os.walk(options.img_dir))[0][2])
-
     image_to_class = {x['Image Index']: x['Finding Labels'] for _, x in dataentry.iterrows() if '|' not in x['Finding Labels']}
     class_to_label = {x['Classes']: x['Label'] for _, x in mapping_df.iterrows()}
 
