@@ -64,7 +64,10 @@ def _process_image_files_batch(output_file, filenames, synsets, labels):
   writer = tf.python_io.TFRecordWriter('tmp.record')
 
   n = len(filenames)
-  total_n = n * 6
+
+  if AUGMENT:
+    n = n * 6
+      
   processed = 0
   print("Starting processing for %s n = %d" % (output_file, n))
   for idx, data in enumerate(zip(filenames, synsets)):
@@ -78,7 +81,7 @@ def _process_image_files_batch(output_file, filenames, synsets, labels):
       example = create_tf_example(image_buffer, label, width, height)
       writer.write(example.SerializeToString())
       if processed % 10 == 0:
-          print("Processed %d/%d" % (processed, total_n))
+          print("Processed %d/%d" % (processed, n))
       processed += 1
 
   writer.close()
@@ -128,7 +131,7 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     AUGMENT = options.augment is not None
-    
+
     if not options.gcs_dir:
         raise Exception('GCS dir not provided')
 
