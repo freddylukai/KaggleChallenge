@@ -14,6 +14,7 @@ TRAINING_SHARDS = 1024
 VALIDATION_SHARDS = 128
 TRAINING_DIRECTORY = 'train'
 VALIDATION_DIRECTORY = 'validation'
+AUGMENT = True
 
 def prepare_folder(folder_path):
     if os.path.isdir(folder_path):
@@ -32,6 +33,7 @@ def create_tf_example(image_buffer, label, width, height):
     }))
 
 def _process_image(filename, imgTransformationCount=5):
+  global AUGMENT
 
   model_file = file_io.FileIO(filename, mode='rb')
   temp_model_location = './temp.png'
@@ -45,12 +47,13 @@ def _process_image(filename, imgTransformationCount=5):
     
   decoded_strings= list()
   decoded_strings.append(decoded)
-  
-  # Generate more images per each original image by applying random transformations.
-  for i in range(imgTransformationCount):
-        im_trans_data = utils.transform_image(image_data)
-        trans_decoded = cv2.imencode('.png', im_trans_data)[1].tostring()
-        decoded_strings.append(trans_decoded)
+
+  if AUGMENT:
+      # Generate more images per each original image by applying random transformations.
+      for i in range(imgTransformationCount):
+            im_trans_data = utils.transform_image(image_data)
+            trans_decoded = cv2.imencode('.png', im_trans_data)[1].tostring()
+            decoded_strings.append(trans_decoded)
         
   # Return the list of decoded strings along with height and weight of each image.
   # Each transformed image is having the same shape as the original image.
@@ -121,9 +124,11 @@ if __name__ == '__main__':
     parser.add_option("-d", "--gcsdir", dest="gcs_dir", help="GCS base dir")
     parser.add_option("-i", "--imgdir", dest="img_dir", help="PNNGs dir")
     parser.add_option("-t", "--tfrecorddir", dest="tfrecord_dir", help="tfrecords dir")
+    parser.add_option("-a", "--augment", dest="augment", help="augment", action="store_true")
 
     (options, args) = parser.parse_args()
-
+    AUGMENT = options.augment is not None
+    
     if not options.gcs_dir:
         raise Exception('GCS dir not provided')
 
@@ -157,6 +162,9 @@ if __name__ == '__main__':
 
     training_filenames = [os.path.join(options.img_dir, x) for x in training_names]
     validation_filenames = [os.path.join(options.img_dir, x) for x in validation_names]
+
+    print("Training Size %d", len(training_filenames))
+    print("Validation Size %d", len(validation_filenames))
 
     training = _process_dataset(training_filenames, training_classes, class_to_label, options.tfrecord_dir, TRAINING_DIRECTORY, TRAINING_SHARDS)
     validation = _process_dataset(validation_filenames, validation_classes, class_to_label, options.tfrecord_dir, VALIDATION_DIRECTORY, VALIDATION_SHARDS)
