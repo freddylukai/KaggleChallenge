@@ -63,7 +63,7 @@ def _process_image_files_batch(output_file, filenames, synsets, labels):
   n = len(filenames)
   total_n = n * 6
   processed = 0
-  print("Starting processing for %s" % (output_file))
+  print("Starting processing for %s n = %d" % (output_file, n))
   for idx, data in enumerate(zip(filenames, synsets)):
     filename, synset = data
     # The below _process_image returns 6 images. One original and 5 transformed.
