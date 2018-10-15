@@ -59,16 +59,24 @@ def _process_image(filename, imgTransformationCount=5):
 def _process_image_files_batch(output_file, filenames, synsets, labels):
 
   writer = tf.python_io.TFRecordWriter('tmp.record')
-    
-  for filename, synset in zip(filenames, synsets):
+
+  n = len(filenames)
+  total_n = n * 6
+  processed = 0
+  print("Starting processing for %s" % (output_file))
+  for idx, data in enumerate(zip(filenames, synsets)):
+    filename, synset = data
     # The below _process_image returns 6 images. One original and 5 transformed.
     decoded_image_strings, height, width = _process_image(filename)
     label = labels[synset]
-    
+
     # Create a tfrecord for each image.
     for image_buffer in decoded_image_strings:
       example = create_tf_example(image_buffer, label, width, height)
       writer.write(example.SerializeToString())
+      if processed % 10 == 0:
+          print("Processed %d/%d" % (processed, total_n))
+      processed += 1
 
   writer.close()
 
@@ -138,6 +146,7 @@ if __name__ == '__main__':
     tf_records_path = os.path.join(options.gcs_dir, 'records')
 
     allowed_images = set([x['Image Index'] for _, x in dataentry.iterrows() if '|' not in x['Finding Labels']])
+    allowed_images = set(list(os.walk(options.img_dir))[0][2])
 
     image_to_class = {x['Image Index']: x['Finding Labels'] for _, x in dataentry.iterrows() if '|' not in x['Finding Labels']}
     class_to_label = {x['Classes']: x['Label'] for _, x in mapping_df.iterrows()}
