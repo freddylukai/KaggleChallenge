@@ -91,38 +91,44 @@ def rotate_image(img, angle):
   return ndimage.rotate(img, angle, axes=(0,1), mode='reflect', reshape=False)
 
 def shift_image(img, height_shift, width_shift):
-  shifted = ndimage.shift(img, shift=(height_shift, width_shift))
+  shifted = ndimage.shift(img, shift=(height_shift, width_shift, 0))
   return shifted
 
 def zoom_image(image,height_zoom, width_zoom):
   # Zoom in or out - Make sure pad with zeros or resize for the initial size.
-  zoomed = ndimage.zoom(image, (height_zoom, width_zoom))
+  zoomed = ndimage.zoom(image, (height_zoom, width_zoom, 1))
   return zoomed
 
-def crop_image(image, height, width):
-  imgResized = np.zeros((height, width))
+def crop_image(image, height, width, channel):
+  imgResized = np.zeros((height, width, channel))
   height_small = min(image.shape[0], height)
   width_small = min(image.shape[1], width)
-  imgResized[:height_small, :width_small] = image[:height_small, :width_small]
+  imgResized[:height_small, :width_small, :] = image[:height_small, :width_small, :]
   return imgResized
 
 def transform_image(image):
+  #print('Image shape: ', image.shape)
   angle = np.random.randint(0,45) 
   rotated = rotate_image(image, angle)
-  
+  #print('Rotated image shape: ', rotated.shape)
+    
   original_shape = image.shape
   height_shift = np.random.randint(0,original_shape[0]/10)
   width_shift = np.random.randint(0, original_shape[1]/10)
-  print("Original Image shape: ", original_shape)
-  print('New shape: {0}, {1}'.format(height_shift, width_shift))
+  #print("Original Image shape: ", original_shape)
+  #print('Shift: {0}, {1}'.format(height_shift, width_shift))
   shifted = shift_image(rotated, height_shift, width_shift)  
+  #print('Shifted image shape: ', shifted.shape)
 
   # Keep the zoom ratio to max of 10% for both zoom in and zoom out.
-  width_zoom = np.random.uniform(0.9,1.1)
-  height_zoom = np.random.uniform(0.9, 1.1)
-  if(width_zoom, height_zoom) == (1,1):
-    width_zoom, height_zoom = (1.1, 1.1)
-  zoomed = zoom_image(shifted, height_zoom, width_zoom)
-  
-  zoomedResized = crop_image(zoomed, original_shape[0], original_shape[1])
-  return zoomedResized
+  #width_zoom = np.random.uniform(0.9,1.1)
+  #height_zoom = np.random.uniform(0.9, 1.1)
+  #if(width_zoom, height_zoom) == (1,1):
+  #  width_zoom, height_zoom = (1.1, 1.1)
+  #zoomed = zoom_image(shifted, height_zoom, width_zoom)
+  #print('Zoomed image shape: ', zoomed.shape)
+    
+  #zoomedResized = crop_image(zoomed, original_shape[0], original_shape[1], original_shape[2])
+  #print('Zoomed resized image shape: ', zoomedResized.shape)
+    
+  return shifted
