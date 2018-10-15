@@ -105,17 +105,19 @@ def _process_dataset(filenames, synsets, labels, output_directory, prefix, num_s
   Returns:
     files: list of tf-record filepaths created from processing the dataset.
   """
+  NUM_THREADS = 32
   chunksize = int(math.ceil(len(filenames) / num_shards))
-
+  
   files = []
 
-  for shard in range(num_shards):
-    chunk_files = filenames[shard * chunksize : (shard + 1) * chunksize]
-    chunk_synsets = synsets[shard * chunksize : (shard + 1) * chunksize]
-    output_file = os.path.join(
-        output_directory, '%s-%.5d-of-%.5d' % (prefix, shard, num_shards))
-    _process_image_files_batch(output_file, chunk_files,
-                               chunk_synsets, labels)
+  for shard in range(0, num_shards, NUM_THREADS):
+    for i in range(NUM_THREADS):
+        chunk_files = filenames[(shard + i) * chunksize : (shard + i + 1) * chunksize]
+        chunk_synsets = synsets[(shard + i) * chunksize : (shard + i + 1) * chunksize]
+        output_file = os.path.join(
+            output_directory, '%s-%.5d-of-%.5d' % (prefix, shard, num_shards))
+        thread.start_new_thread(_process_image_files_batch(output_file, chunk_files,
+                                   chunk_synsets, labels))
 
 
     tf.logging.info('Finished writing file: %s' % output_file)
