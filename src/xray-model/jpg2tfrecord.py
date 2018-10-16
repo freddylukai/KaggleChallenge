@@ -9,6 +9,7 @@ import shutil
 import utils
 import pandas as pd
 import math
+from threading import Thread
 
 TRAINING_SHARDS = 1024
 VALIDATION_SHARDS = 128
@@ -32,11 +33,11 @@ def create_tf_example(image_buffer, label, width, height):
         'image/object/class/label': utils.int64_feature(label)
     }))
 
-def _process_image(filename, imgTransformationCount=5):
+def _process_image(filename, tmp_name, imgTransformationCount=5):
   global AUGMENT
 
   model_file = file_io.FileIO(filename, mode='rb')
-  temp_model_location = './temp.png'
+  temp_model_location = './%s.png' % tmp_name
   temp_model_file = open(temp_model_location, 'wb')
   temp_model_file.write(model_file.read())
   temp_model_file.close()
@@ -59,9 +60,10 @@ def _process_image(filename, imgTransformationCount=5):
   # Each transformed image is having the same shape as the original image.
   return decoded_strings, height, width
 
-def _process_image_files_batch(output_file, filenames, synsets, labels):
+def _process_image_files_batch(output_file, filenames, synsets, labels, tmp_name):
 
-  writer = tf.python_io.TFRecordWriter('tmp.record')
+  tmp_recordname = "%s.record" % tmp_name
+  writer = tf.python_io.TFRecordWriter(tmp_recordname)
 
   n = len(filenames)
 
@@ -73,7 +75,7 @@ def _process_image_files_batch(output_file, filenames, synsets, labels):
   for idx, data in enumerate(zip(filenames, synsets)):
     filename, synset = data
     # The below _process_image returns 6 images. One original and 5 transformed.
-    decoded_image_strings, height, width = _process_image(filename)
+    decoded_image_strings, height, width = _process_image(filename, tmp_name)
     label = labels[synset]
 
     # Create a tfrecord for each image.
@@ -86,7 +88,7 @@ def _process_image_files_batch(output_file, filenames, synsets, labels):
 
   writer.close()
 
-  with file_io.FileIO('tmp.record', mode='rb') as f:
+  with file_io.FileIO(tmp_recordname, mode='rb') as f:
       with file_io.FileIO(output_file, mode='wb+') as of:
           of.write(f.read())
           print(output_file, 'written')
@@ -111,13 +113,19 @@ def _process_dataset(filenames, synsets, labels, output_directory, prefix, num_s
   files = []
 
   for shard in range(0, num_shards, NUM_THREADS):
+    threads = []
     for i in range(NUM_THREADS):
         chunk_files = filenames[(shard + i) * chunksize : (shard + i + 1) * chunksize]
         chunk_synsets = synsets[(shard + i) * chunksize : (shard + i + 1) * chunksize]
         output_file = os.path.join(
             output_directory, '%s-%.5d-of-%.5d' % (prefix, shard, num_shards))
-        thread.start_new_thread(_process_image_files_batch(output_file, chunk_files,
-                                   chunk_synsets, labels))
+
+        t = Thread(target=_process_image_files_batch, args=(output_file, chunk_files, chunk_synsets, labels, "tmp_%d" % i))
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
 
 
     tf.logging.info('Finished writing file: %s' % output_file)
