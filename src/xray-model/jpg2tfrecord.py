@@ -118,7 +118,7 @@ def _process_dataset(filenames, synsets, labels, output_directory, prefix, num_s
         chunk_files = filenames[(shard + i) * chunksize : (shard + i + 1) * chunksize]
         chunk_synsets = synsets[(shard + i) * chunksize : (shard + i + 1) * chunksize]
         output_file = os.path.join(
-            output_directory, '%s-%.5d-of-%.5d' % (prefix, shard, num_shards))
+            output_directory, '%s-%.5d-of-%.5d' % (prefix, shard + i, num_shards))
 
         t = Thread(target=_process_image_files_batch, args=(output_file, chunk_files, chunk_synsets, labels, "tmp_%d" % i))
         t.start()
