@@ -352,6 +352,71 @@ def main(argv):
                 steps=FLAGS.eval_samples // FLAGS.eval_batch_size)
             tf.logging.info('Evaluation results: %s' % eval_results)
 
+    elif FLAGS.mode == 'predict':
+        # Predict only runs on CPU or GPU host with batch_size = 1.
+        # Override the default options: disable randomization in the input pipeline
+        # and don't run on the TPU.
+        # Also, disable use_bfloat16 for eval on CPU/GPU.
+        predict_params = dict(
+            params,
+            use_tpu=False,
+            input_rand_hflip=False,
+            resnet_checkpoint=None,
+            densenet_checkpoint=None,
+            is_training_bn=False,
+            use_bfloat16=False,
+        )
+
+        predict_estimator = tf.contrib.tpu.TPUEstimator(
+            model_fn=retinanet_model.retinanet_model_fn,
+            use_tpu=False,
+            train_batch_size=FLAGS.train_batch_size,
+            eval_batch_size=FLAGS.eval_batch_size,
+            config=run_config,
+            params=predict_params)
+
+        def terminate_eval():
+            tf.logging.info('Terminating eval after %d seconds of no checkpoints' %
+                            FLAGS.eval_timeout)
+            return True
+
+        # Run evaluation when there's a new checkpoint
+        for ckpt in tf.contrib.training.checkpoints_iterator(
+                FLAGS.model_dir,
+                min_interval_secs=FLAGS.min_eval_interval,
+                timeout=FLAGS.eval_timeout,
+                timeout_fn=terminate_eval):
+
+            filename = "results-" + os.path.basename(ckpt)
+            f = open(filename, 'w')
+            tf.logging.info('Starting to predict.')
+            try:
+                predict_results = predict_estimator.predict(
+                    input_fn=dataloader.InputReader(FLAGS.validation_file_pattern,
+                                                    is_training=False),
+                    steps=FLAGS.eval_samples // FLAGS.eval_batch_size)
+                for i, result in enumerate(predict_results):
+                    tf.logging.info("Prediction result %d: %s" % (i, result))
+                    f.write(result)
+                    f.write("\n")
+
+                # Terminate eval job when final checkpoint is reached
+                current_step = int(os.path.basename(ckpt).split('-')[1])
+                total_step = int((FLAGS.num_epochs * FLAGS.num_examples_per_epoch) /
+                                 FLAGS.train_batch_size)
+                if current_step >= total_step:
+                    tf.logging.info('Evaluation finished after training step %d' %
+                                    current_step)
+                    break
+
+            except tf.errors.NotFoundError:
+                # Since the coordinator is on a different job than the TPU worker,
+                # sometimes the TPU worker does not finish initializing until long after
+                # the CPU job tells it to start evaluating. In this case, the checkpoint
+                # file could have been deleted already.
+                tf.logging.info('Checkpoint %s no longer exists, skipping checkpoint' %
+                                ckpt)
+            f.close()
     else:
         tf.logging.info('Mode not found.')
 
