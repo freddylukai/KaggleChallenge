@@ -1,14 +1,14 @@
 import tensorflow as tf
-import sys
+#import sys
 from optparse import OptionParser
 import os
 from tensorflow.python.lib.io import file_io
-import zipfile
+#import zipfile
 import cv2
-import shutil
-import utils
+#import shutil
+#import utils
 import pandas as pd
-import math
+#import math
 import numpy as np
 
 
@@ -70,13 +70,19 @@ if __name__ == '__main__':
     bStdGlobal = 0.0
 
     for imageFile in training_filenames:
-        model_file = file_io.FileIO(imageFile, mode='rb')
-        temp_model_location = './temp.png'
-        temp_model_file = open(temp_model_location, 'wb')
-        temp_model_file.write(model_file.read())
-        temp_model_file.close()
+        #if not os.path.exists(imageFile): continue
 
-        img = cv2.imread(temp_model_location)
+        #model_file = file_io.FileIO(imageFile, mode='rb')
+        #temp_model_location = './temp.png'
+        #temp_model_file = open(temp_model_location, 'wb')
+        #temp_model_file.write(model_file.read())
+        #temp_model_file.close()
+
+        if not os.path.exists(imageFile):
+            print('File: {} does not exist'.format(imageFile))
+            continue
+        img = cv2.imread(imageFile)
+
         rMean = np.mean(img[:, :, 0])
         gMean = np.mean(img[:, :, 1])
         bMean = np.mean(img[:, :, 2])
