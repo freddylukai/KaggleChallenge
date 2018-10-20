@@ -22,10 +22,6 @@ T.-Y. Lin, P. Goyal, R. Girshick, K. He, and P. Dollar
 Focal Loss for Dense Object Detection. arXiv:1708.02002
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import tensorflow as tf
 
 from . import anchors
@@ -171,6 +167,7 @@ def _classification_loss(cls_outputs,
 
 def _box_loss(box_outputs, box_targets, num_positives, delta=0.1):
     """Computes box regression loss."""
+    # TODO: testing value of delta
     # delta is typically around the mean value of regression target.
     # for instances, the regression targets of 512x512 input with 6 anchors on
     # P3-P7 pyramid is about [0.1, 0.1, 0.2, 0.2].
@@ -183,6 +180,41 @@ def _box_loss(box_outputs, box_targets, num_positives, delta=0.1):
         delta=delta,
         reduction=tf.losses.Reduction.SUM)
     box_loss /= normalizer
+    return box_loss
+
+def _box_loss_iou(box_outputs, box_targets):
+    _EPSILON = 10e-8
+    def IOULoss(input, label):
+        """
+        :param input: the estimate position
+        :param label: the ground truth position
+        :return: the IoU loss
+        """
+        # the estimate position
+        xt, xb, xl, xr = tf.split(input, num_or_size_splits=4, axis=3)
+
+        # the ground truth position
+        gt, gb, gl, gr = tf.split(label, num_or_size_splits=4, axis=3)
+
+        # compute the bounding box size
+        X = (xt + xb) * (xl + xr)
+        G = (gt + gb) * (gl + gr)
+
+        # compute the IOU
+        Ih = tf.minimum(xt, gt) + tf.minimum(xb, gb)
+        Iw = tf.minimum(xl, gl) + tf.minimum(xr, gr)
+
+        I = tf.multiply(Ih, Iw, name="intersection")
+        U = X + G - I + _EPSILON
+
+        IoU = tf.divide(I, U, name='IoU')
+
+        L = tf.where(tf.less_equal(gt, tf.constant(0.01, dtype=tf.float32)),
+                     tf.zeros_like(xt, tf.float32),
+                     -tf.log(IoU + _EPSILON))
+
+        return tf.reduce_mean(L)
+    box_loss = tf.losses.add_loss(IOULoss(box_outputs, box_targets))
     return box_loss
 
 
@@ -388,6 +420,11 @@ def _model_fn(features, labels, mode, params, model, variable_filter_fn=None):
             tf.train.init_from_checkpoint(params['resnet_checkpoint'], {
                 '/': 'resnet%s/' % params['resnet_depth'],
             })
+            return tf.train.Scaffold()
+    elif params['densenet_checkpoint'] and mode == tf.estimator.ModeKeys.TRAIN:
+
+        def scaffold_fn():
+            tf.train.init_from_checkpoint(params['densenet_checkpoint'], { '/' : 'densenet%s' % params['resnet_depth'],})
             return tf.train.Scaffold()
     else:
         scaffold_fn = None

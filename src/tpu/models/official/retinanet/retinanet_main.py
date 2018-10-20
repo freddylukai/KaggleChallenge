@@ -15,10 +15,6 @@
 """Training script for RetinaNet.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import os
 
 from absl import flags
@@ -57,6 +53,7 @@ flags.DEFINE_string('model_dir', None, 'Location of model_dir')
 flags.DEFINE_string('resnet_checkpoint', '',
                     'Location of the ResNet50 checkpoint to use for model '
                     'initialization.')
+flags.DEFINE_string('densenet_checkpoint', '', 'Location of Densenet checkpoint')
 flags.DEFINE_string('hparams', '',
                     'Comma separated k=v pairs of hyperparameters.')
 flags.DEFINE_integer(
@@ -191,6 +188,7 @@ def main(argv):
         num_examples_per_epoch=FLAGS.num_examples_per_epoch,
         use_tpu=FLAGS.use_tpu,
         resnet_checkpoint=FLAGS.resnet_checkpoint,
+        densenet_checkpoint=FLAGS.densenet_checkpoint,
         val_json_file=FLAGS.val_json_file,
         mode=FLAGS.mode,
     )
@@ -240,6 +238,7 @@ def main(argv):
                 use_tpu=False,
                 input_rand_hflip=False,
                 resnet_checkpoint=None,
+                densenet_checkpoint=None,
                 is_training_bn=False,
                 use_bfloat16=False,
             )
@@ -336,6 +335,7 @@ def main(argv):
                 use_tpu=False,
                 input_rand_hflip=False,
                 resnet_checkpoint=None,
+                densenet_checkpoint=None,
                 is_training_bn=False,
             )
 

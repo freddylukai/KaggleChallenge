@@ -619,17 +619,6 @@ def retinanet(features,
     return class_outputs, box_outputs
 
 
-def retinanet_densenet(features,
-                       min_level=3,
-                       max_level=7,
-                       num_classes=90,
-                       num_anchors=6,
-                       densenet_depth=50,
-                       use_nearest_upsampling=True,
-                       is_training_bn=False):
-    pass
-
-
 def remove_variables(variables, resnet_depth=50):
     """Removes low-level variables from the input.
 

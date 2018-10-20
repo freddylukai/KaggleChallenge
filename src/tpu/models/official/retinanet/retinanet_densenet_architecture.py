@@ -374,6 +374,7 @@ def retinanet(features,
               max_level=7,
               num_classes=90,
               num_anchors=6,
+              resnet_depth=121,
               use_nearest_upsampling=True,
               is_training_bn=False):
     """RetinaNet classification and regression model."""
@@ -397,7 +398,7 @@ def retinanet(features,
     return class_outputs, box_outputs
 
 
-def remove_variables(variables, resnet_depth=50):
+def remove_variables(variables, resnet_depth=121):
     """Removes low-level variables from the input.
 
     Removing low-level parameters (e.g., initial convolution layer) from training

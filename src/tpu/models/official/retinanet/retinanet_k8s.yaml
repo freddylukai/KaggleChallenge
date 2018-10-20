@@ -43,7 +43,7 @@ spec:
           --training_file_pattern=${DATA_BUCKET}/train-*
           --resnet_checkpoint=${RESNET_CHECKPOINT}
           --model_dir=${MODEL_BUCKET}
-          --hparams=image_size=640
+          --hparams=image_size=1024
           --num_examples_per_epoch=6400
           --num_epochs=1
         env:
