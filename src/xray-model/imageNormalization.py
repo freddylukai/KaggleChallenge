@@ -70,7 +70,7 @@ if __name__ == '__main__':
     bStdGlobal = 0.0
 
     for imageFile in training_filenames:
-        model_file = file_io.FileIO(os.path.join(options.img_dir,imageFile), mode='rb')
+        model_file = file_io.FileIO(imageFile, mode='rb')
         temp_model_location = './temp.png'
         temp_model_file = open(temp_model_location, 'wb')
         temp_model_file.write(model_file.read())
