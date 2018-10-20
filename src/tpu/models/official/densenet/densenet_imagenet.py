@@ -149,6 +149,24 @@ def learning_rate_schedule(current_epoch):
     return decay_rate
 
 
+class XRayNetInput(object):
+
+    def __init__(self, is_training, data_dir=None):
+        self.is_training = is_training
+        if data_dir:
+            self.data_dir = data_dir
+        elif FLAGS.data_dir:
+            self.data_dir = FLAGS.data_dir
+        else:
+            self.data_dir = None
+
+    def dataset_parser(self, value):
+        keys_to_features = {
+            "image/image": tf.FixedLenFeature((), tf.string, ""),
+            "image/class/label": tf.FixedLenFeature([], tf.int64, -1),
+        }
+
+
 class ImageNetInput(object):
     """Wrapper class that acts as the input_fn to TPUEstimator."""
 

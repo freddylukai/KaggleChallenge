@@ -1,0 +1,1 @@
+python3 jpg2tfrecord.py -d gs://nih-chest-xrays/data  -i gs://nih-chest-xrays/data/un  -t gs://kaggle-rsna-datastorage/nih-chest-xrays/tfrecords
